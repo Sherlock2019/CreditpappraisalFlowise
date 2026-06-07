@@ -1,0 +1,198 @@
+{
+  "name": "PoC LLM Provider Router",
+  "description": "Routes OpenAI, DeepSeek, and Local Mistral via Ollama based on the provider logic in the real backend and Streamlit UI.",
+  "deployed": false,
+  "isPublic": false,
+  "type": "CHATFLOW",
+  "category": "PoC;AI-Agent-Hub;RAG;Migration",
+  "flowData": {
+    "nodes": [
+      {
+        "id": "node_start",
+        "type": "customNode",
+        "position": {
+          "x": 0,
+          "y": 180
+        },
+        "data": {
+          "label": "Provider Selection",
+          "component": "Chat Input / Runtime Variables",
+          "source_files": [
+            "bank-credit-ai-poc/frontend/streamlit_app.py"
+          ],
+          "input": "{{$vars.llm_provider}}"
+        },
+        "width": 300,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_llm_router",
+        "type": "customNode",
+        "position": {
+          "x": 380,
+          "y": 160
+        },
+        "data": {
+          "label": "Provider Router",
+          "component": "Conditional Router",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/llm_providers/factory.py"
+          ],
+          "routes": {
+            "openai": "node_openai",
+            "deepseek": "node_deepseek",
+            "local_mistral_ollama": "node_ollama_mistral"
+          }
+        },
+        "width": 340,
+        "height": 260,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_openai",
+        "type": "customNode",
+        "position": {
+          "x": 840,
+          "y": 0
+        },
+        "data": {
+          "label": "OpenAI",
+          "component": "ChatOpenAI",
+          "credentialRef": "{{FLOWISE_CREDENTIAL_OPENAI}}",
+          "enabled_env": "OPENAI_API_KEY",
+          "model_env": "OPENAI_MODEL",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/llm_providers/openai_provider.py"
+          ]
+        },
+        "width": 320,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_deepseek",
+        "type": "customNode",
+        "position": {
+          "x": 840,
+          "y": 280
+        },
+        "data": {
+          "label": "DeepSeek",
+          "component": "OpenAI-Compatible Chat Model",
+          "credentialRef": "{{FLOWISE_CREDENTIAL_DEEPSEEK}}",
+          "enabled_env": "DEEPSEEK_API_KEY",
+          "base_url_env": "DEEPSEEK_BASE_URL",
+          "model_env": "DEEPSEEK_MODEL",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/llm_providers/deepseek_provider.py"
+          ]
+        },
+        "width": 340,
+        "height": 240,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_ollama_mistral",
+        "type": "customNode",
+        "position": {
+          "x": 840,
+          "y": 580
+        },
+        "data": {
+          "label": "Local Mistral via Ollama",
+          "component": "ChatOllama",
+          "base_url_env": "OLLAMA_BASE_URL",
+          "model_env": "OLLAMA_LOCAL_MODEL",
+          "allowed_models": [
+            "mistral",
+            "mistral:7b-instruct",
+            "mistral-small"
+          ],
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/llm_providers/ollama_provider.py"
+          ]
+        },
+        "width": 340,
+        "height": 260,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_final_response",
+        "type": "customNode",
+        "position": {
+          "x": 1280,
+          "y": 300
+        },
+        "data": {
+          "label": "Provider Response",
+          "component": "LLM Output",
+          "metadata": [
+            "llm_provider_used",
+            "llm_model_used",
+            "flowise_used",
+            "fallback_used"
+          ]
+        },
+        "width": 340,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_router",
+        "source": "node_start",
+        "target": "node_llm_router",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_router_openai",
+        "source": "node_llm_router",
+        "target": "node_openai",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_router_deepseek",
+        "source": "node_llm_router",
+        "target": "node_deepseek",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_router_ollama",
+        "source": "node_llm_router",
+        "target": "node_ollama_mistral",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_openai_final",
+        "source": "node_openai",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_deepseek_final",
+        "source": "node_deepseek",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_ollama_final",
+        "source": "node_ollama_mistral",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      }
+    ],
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 0.8
+    }
+  }
+}

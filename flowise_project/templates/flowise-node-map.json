@@ -1,0 +1,121 @@
+{
+  "nodes": [
+    {
+      "id": "node_frontend_entry",
+      "label": "Frontend Entry",
+      "component": "Custom Tool / API Caller",
+      "source_files": [
+        "bank-credit-ai-poc/frontend/streamlit_app.py",
+        "index.html"
+      ],
+      "purpose": "Receives user request from PoC frontend and forwards customer, file, connector, chat, and assessment actions to backend or Flowise."
+    },
+    {
+      "id": "node_api_backend",
+      "label": "PoC Backend API",
+      "component": "Custom Tool",
+      "source_files": [
+        "bank-credit-ai-poc/backend/app/routers/chat.py",
+        "bank-credit-ai-poc/backend/app/routers/documents.py",
+        "bank-credit-ai-poc/backend/app/routers/connectors.py",
+        "bank-credit-ai-poc/backend/app/routers/credit_assessment.py"
+      ],
+      "purpose": "Calls the real backend API endpoints discovered in the repo."
+    },
+    {
+      "id": "node_llm_router",
+      "label": "LLM Router",
+      "component": "Conditional Router",
+      "source_files": [
+        "bank-credit-ai-poc/backend/app/llm_providers/factory.py",
+        "bank-credit-ai-poc/frontend/streamlit_app.py"
+      ],
+      "purpose": "Switches between OpenAI, DeepSeek, Custom Public API, and Local Mistral via Ollama."
+    },
+    {
+      "id": "node_rag_retriever",
+      "label": "RAG Retriever",
+      "component": "Retriever / Vector Store",
+      "source_files": [
+        "bank-credit-ai-poc/backend/app/rag.py",
+        "bank-credit-ai-poc/db/init.sql"
+      ],
+      "purpose": "Searches indexed PoC documents and uploaded files in PostgreSQL pgvector."
+    },
+    {
+      "id": "node_document_ingestion",
+      "label": "Document Ingestion",
+      "component": "Document Loader / API Tool",
+      "source_files": [
+        "bank-credit-ai-poc/backend/app/routers/documents.py",
+        "bank-credit-ai-poc/backend/app/document_parser.py",
+        "bank-credit-ai-poc/backend/app/embeddings.py"
+      ],
+      "purpose": "Uploads, parses, chunks, embeds, and indexes credit documents."
+    },
+    {
+      "id": "node_external_connectors",
+      "label": "Enterprise Connectors",
+      "component": "Tool Router",
+      "source_files": [
+        "bank-credit-ai-poc/backend/app/connectors/factory.py",
+        "bank-credit-ai-poc/backend/app/connectors/s3_connector.py",
+        "bank-credit-ai-poc/backend/app/connectors/sharepoint_connector.py",
+        "bank-credit-ai-poc/backend/app/connectors/opentext_connector.py",
+        "bank-credit-ai-poc/backend/app/connectors/hyland_connector.py",
+        "bank-credit-ai-poc/backend/app/connectors/filenet_connector.py",
+        "bank-credit-ai-poc/backend/app/connectors/servicenow_connector.py",
+        "bank-credit-ai-poc/backend/app/connectors/salesforce_connector.py",
+        "bank-credit-ai-poc/backend/app/connectors/cloud_storage_connector.py"
+      ],
+      "purpose": "Routes document source operations to local upload, S3, and enterprise connector placeholders."
+    },
+    {
+      "id": "node_output",
+      "label": "Final Answer",
+      "component": "LLM Chain / Agent Output",
+      "source_files": [
+        "bank-credit-ai-poc/backend/app/routers/chat.py",
+        "bank-credit-ai-poc/backend/app/routers/credit_assessment.py"
+      ],
+      "purpose": "Returns final credit support response, citations, provider metadata, and human review warning."
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_frontend_entry",
+      "target": "node_api_backend",
+      "label": "REST calls"
+    },
+    {
+      "source": "node_api_backend",
+      "target": "node_document_ingestion",
+      "label": "upload / ingest"
+    },
+    {
+      "source": "node_document_ingestion",
+      "target": "node_rag_retriever",
+      "label": "pgvector chunks"
+    },
+    {
+      "source": "node_api_backend",
+      "target": "node_external_connectors",
+      "label": "connector operations"
+    },
+    {
+      "source": "node_api_backend",
+      "target": "node_llm_router",
+      "label": "provider selection"
+    },
+    {
+      "source": "node_rag_retriever",
+      "target": "node_output",
+      "label": "retrieved context"
+    },
+    {
+      "source": "node_llm_router",
+      "target": "node_output",
+      "label": "LLM answer"
+    }
+  ]
+}

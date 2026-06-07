@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: credit_ai_postgres
+    environment:
+      POSTGRES_DB: credit_ai
+      POSTGRES_USER: credit_ai_user
+      POSTGRES_PASSWORD: credit_ai_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./backend
+    container_name: credit_ai_backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data/uploads:/app/data/uploads
+
+  frontend:
+    build: ./frontend
+    container_name: credit_ai_frontend
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+
+  flowise:
+    image: flowiseai/flowise:latest
+    container_name: credit_ai_flowise
+    profiles:
+      - flowise
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+    volumes:
+      - flowise_data:/root/.flowise
+
+volumes:
+  postgres_data:
+  flowise_data:

@@ -1,0 +1,2821 @@
+{
+  "nodes": [
+    {
+      "width": 320,
+      "height": 300,
+      "id": "chat_input",
+      "position": {
+        "x": -420,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chat_input",
+        "label": "Chat Input",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Chat Input",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chat_input-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "chat_input-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "chat_input-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "chat_input-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "chat_input",
+          "javascriptFunction": "return {\n  component: \"Chat Input\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "chat_input-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": -420,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "runtime_vars",
+      "position": {
+        "x": -40,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "runtime_vars",
+        "label": "Runtime Variables",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Runtime Variables",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "runtime_vars-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "runtime_vars-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "runtime_vars-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "runtime_vars-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "runtime_variables",
+          "javascriptFunction": "return {\n  component: \"Runtime Variables\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "runtime_vars-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": -40,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "http_retrieval_tool",
+      "position": {
+        "x": 340,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "http_retrieval_tool",
+        "label": "HTTP Retrieval Tool",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "HTTP Retrieval Tool",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "http_retrieval_tool-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "http_retrieval_tool-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "http_retrieval_tool-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "http_retrieval_tool-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "http_retrieval_tool",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/retrieval/query\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/retrieval/query\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "http_retrieval_tool-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 340,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "document_upload",
+      "position": {
+        "x": 340,
+        "y": 760
+      },
+      "type": "customNode",
+      "data": {
+        "id": "document_upload",
+        "label": "Document Upload",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Document Upload",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "document_upload-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "document_upload-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "document_upload-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "document_upload-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "document_upload",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/documents/upload\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/documents/upload\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "document_upload-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 340,
+        "y": 760
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "parser",
+      "position": {
+        "x": 720,
+        "y": 760
+      },
+      "type": "customNode",
+      "data": {
+        "id": "parser",
+        "label": "Parser",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Parser",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "parser-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "parser-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "parser-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "parser-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "parser",
+          "javascriptFunction": "return {\n  component: \"Parser: app/document_parser.py\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "parser-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 720,
+        "y": 760
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "chunker",
+      "position": {
+        "x": 1100,
+        "y": 760
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chunker",
+        "label": "Chunker",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Chunker",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chunker-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "chunker-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "chunker-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "chunker-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "chunker",
+          "javascriptFunction": "return {\n  component: \"Chunker: app/document_parser.py\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "chunker-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1100,
+        "y": 760
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "embeddings",
+      "position": {
+        "x": 1480,
+        "y": 760
+      },
+      "type": "customNode",
+      "data": {
+        "id": "embeddings",
+        "label": "Embeddings",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Embeddings",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "embeddings-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "embeddings-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "embeddings-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "embeddings-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "embeddings",
+          "javascriptFunction": "return {\n  component: \"Embeddings: app/embeddings.py\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "embeddings-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1480,
+        "y": 760
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "postgresql",
+      "position": {
+        "x": 1860,
+        "y": 760
+      },
+      "type": "customNode",
+      "data": {
+        "id": "postgresql",
+        "label": "PostgreSQL",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "PostgreSQL",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "postgresql-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "postgresql-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "postgresql-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "postgresql-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "postgresql",
+          "javascriptFunction": "return {\n  component: \"PostgreSQL: customers/documents/document_chunks\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "postgresql-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1860,
+        "y": 760
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "pgvector",
+      "position": {
+        "x": 2240,
+        "y": 760
+      },
+      "type": "customNode",
+      "data": {
+        "id": "pgvector",
+        "label": "pgvector",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "pgvector",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "pgvector-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "pgvector-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "pgvector-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "pgvector-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "pgvector",
+          "javascriptFunction": "return {\n  component: \"pgvector: document_chunks.embedding vector index\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "pgvector-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2240,
+        "y": 760
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "retriever",
+      "position": {
+        "x": 720,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "retriever",
+        "label": "Retriever",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Retriever",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "retriever-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "retriever-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "retriever-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "retriever-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "retriever",
+          "javascriptFunction": "return {\n  component: \"Retriever: app/rag.py\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "retriever-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 720,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "citation_builder",
+      "position": {
+        "x": 960,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "citation_builder",
+        "label": "Citation Builder",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Citation Builder",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "citation_builder-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "citation_builder-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "citation_builder-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "citation_builder-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "citation_builder",
+          "javascriptFunction": "return {\n  component: \"Citation Builder: citations_from_chunks\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "citation_builder-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 960,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 430,
+      "height": 520,
+      "id": "prompt_template",
+      "position": {
+        "x": 1180,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "prompt_template",
+        "label": "Prompt Template",
+        "version": 1,
+        "name": "promptTemplate",
+        "type": "PromptTemplate",
+        "baseClasses": [
+          "PromptTemplate",
+          "BaseStringPromptTemplate",
+          "BasePromptTemplate"
+        ],
+        "category": "Prompts",
+        "description": "Credit appraisal prompt with RAG context and citations",
+        "inputParams": [
+          {
+            "label": "Template",
+            "name": "template",
+            "type": "string",
+            "rows": 4,
+            "id": "prompt_template-input-template-string"
+          },
+          {
+            "label": "Format Prompt Values",
+            "name": "promptValues",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "prompt_template-input-promptValues-json"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "prompt_template-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "template": "You are LISA, a banking credit analysis assistant inside HyperSpeed Banking AI Copilot.\n\nYou provide decision support only. You must not approve or reject loans.\nUse only the retrieved customer document context, bank policy context, and supplied workflow state.\nIf evidence is missing, say what is missing.\nAlways include citations using document name and page number when available.\nAlways include: \"Human credit officer review required.\"\n\nRuntime packet from FastAPI:\n{question}\n\nReturn:\n1. Short Answer\n2. Risk Level\n3. Preliminary Heuristic Score if available\n4. Key Evidence\n5. Strengths\n6. Weaknesses / Risks\n7. Missing Documents or Data\n8. Loan Policy Scoring\n9. Approval Committee / Final Decision Status\n10. Suggested Follow-up Questions\n11. Citations\n12. Human Review Required",
+          "promptValues": "{}"
+        },
+        "outputAnchors": [
+          {
+            "id": "prompt_template-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate",
+            "name": "promptTemplate",
+            "label": "PromptTemplate",
+            "type": "PromptTemplate | BaseStringPromptTemplate | BasePromptTemplate"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1180,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "llm_router",
+      "position": {
+        "x": 1640,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "llm_router",
+        "label": "LLM Router",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "LLM Router",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "llm_router-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "llm_router-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "llm_router-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "llm_router-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "llm_router",
+          "javascriptFunction": "return {\n  component: \"LLM Router\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "llm_router-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1640,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "ollama_mistral",
+      "position": {
+        "x": 1500,
+        "y": -330
+      },
+      "type": "customNode",
+      "data": {
+        "id": "ollama_mistral",
+        "label": "Ollama: Mistral",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Ollama: Mistral",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "ollama_mistral-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "ollama_mistral-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "ollama_mistral-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "ollama_mistral-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "ollama:_mistral",
+          "javascriptFunction": "return {\n  component: \"Ollama Mistral provider option\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "ollama_mistral-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1500,
+        "y": -330
+      },
+      "dragging": false
+    },
+    {
+      "width": 300,
+      "height": 560,
+      "id": "ollama_gemma",
+      "position": {
+        "x": 1840,
+        "y": -360
+      },
+      "type": "customNode",
+      "data": {
+        "id": "ollama_gemma",
+        "label": "Ollama: Gemma",
+        "version": 5,
+        "name": "chatOllama",
+        "type": "ChatOllama",
+        "baseClasses": [
+          "ChatOllama",
+          "BaseChatModel",
+          "BaseLanguageModel",
+          "Runnable"
+        ],
+        "category": "Chat Models",
+        "description": "Ollama: Gemma",
+        "inputParams": [
+          {
+            "label": "Base URL",
+            "name": "baseUrl",
+            "type": "string",
+            "id": "ollama_gemma-input-baseUrl-string"
+          },
+          {
+            "label": "Model Name",
+            "name": "modelName",
+            "type": "string",
+            "id": "ollama_gemma-input-modelName-string"
+          },
+          {
+            "label": "Temperature",
+            "name": "temperature",
+            "type": "number",
+            "optional": true,
+            "id": "ollama_gemma-input-temperature-number"
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "baseUrl": "http://127.0.0.1:11434",
+          "modelName": "gemma2:9b",
+          "temperature": "0.2"
+        },
+        "outputAnchors": [
+          {
+            "id": "ollama_gemma-output-chatOllama-ChatOllama|BaseChatModel|BaseLanguageModel|Runnable",
+            "name": "chatOllama",
+            "label": "Ollama: Gemma",
+            "type": "ChatOllama | BaseChatModel | BaseLanguageModel | Runnable"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1840,
+        "y": -360
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "openai_provider",
+      "position": {
+        "x": 2180,
+        "y": -330
+      },
+      "type": "customNode",
+      "data": {
+        "id": "openai_provider",
+        "label": "OpenAI",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "OpenAI",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "openai_provider-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "openai_provider-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "openai_provider-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "openai_provider-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "openai",
+          "javascriptFunction": "return {\n  component: \"OpenAI provider\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "openai_provider-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2180,
+        "y": -330
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "deepseek_provider",
+      "position": {
+        "x": 2560,
+        "y": -330
+      },
+      "type": "customNode",
+      "data": {
+        "id": "deepseek_provider",
+        "label": "DeepSeek",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "DeepSeek",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "deepseek_provider-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "deepseek_provider-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "deepseek_provider-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "deepseek_provider-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "deepseek",
+          "javascriptFunction": "return {\n  component: \"DeepSeek provider\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "deepseek_provider-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2560,
+        "y": -330
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "custom_provider",
+      "position": {
+        "x": 2940,
+        "y": -330
+      },
+      "type": "customNode",
+      "data": {
+        "id": "custom_provider",
+        "label": "Custom API",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Custom API",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "custom_provider-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "custom_provider-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "custom_provider-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "custom_provider-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "custom_api",
+          "javascriptFunction": "return {\n  component: \"Custom OpenAI-compatible provider\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "custom_provider-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2940,
+        "y": -330
+      },
+      "dragging": false
+    },
+    {
+      "width": 330,
+      "height": 450,
+      "id": "llm_chain",
+      "position": {
+        "x": 1960,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "llm_chain",
+        "label": "LLM Chain",
+        "version": 3,
+        "name": "llmChain",
+        "type": "LLMChain",
+        "baseClasses": [
+          "LLMChain",
+          "BaseChain",
+          "Runnable"
+        ],
+        "category": "Chains",
+        "description": "Credit assessment chain",
+        "inputParams": [
+          {
+            "label": "Chain Name",
+            "name": "chainName",
+            "type": "string",
+            "optional": true,
+            "id": "llm_chain-input-chainName-string"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Language Model",
+            "name": "model",
+            "type": "BaseLanguageModel",
+            "id": "llm_chain-input-model-BaseLanguageModel"
+          },
+          {
+            "label": "Prompt",
+            "name": "prompt",
+            "type": "BasePromptTemplate",
+            "id": "llm_chain-input-prompt-BasePromptTemplate"
+          },
+          {
+            "label": "Output Parser",
+            "name": "outputParser",
+            "type": "BaseLLMOutputParser",
+            "optional": true,
+            "id": "llm_chain-input-outputParser-BaseLLMOutputParser"
+          }
+        ],
+        "inputs": {
+          "model": "{{ollama_gemma.data.instance}}",
+          "prompt": "{{prompt_template.data.instance}}",
+          "outputParser": "",
+          "chainName": "Docfactor Full Banking Workflow"
+        },
+        "outputAnchors": [
+          {
+            "name": "output",
+            "label": "Output",
+            "type": "options",
+            "options": [
+              {
+                "id": "llm_chain-output-llmChain-LLMChain|BaseChain|Runnable",
+                "name": "llmChain",
+                "label": "LLM Chain",
+                "type": "LLMChain | BaseChain | Runnable"
+              },
+              {
+                "id": "llm_chain-output-outputPrediction-string|json",
+                "name": "outputPrediction",
+                "label": "Output Prediction",
+                "type": "string | json"
+              }
+            ],
+            "default": "llmChain"
+          }
+        ],
+        "outputs": {
+          "output": "llmChain"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 1960,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "credit_assessment",
+      "position": {
+        "x": 2340,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "credit_assessment",
+        "label": "Credit Assessment",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Credit Assessment",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "credit_assessment-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "credit_assessment-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "credit_assessment-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "credit_assessment-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "credit_assessment",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/credit-assessment/{customer_id}\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/credit-assessment/{customer_id}\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "credit_assessment-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2340,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "output_parser",
+      "position": {
+        "x": 2720,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "output_parser",
+        "label": "Output Parser",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Output Parser",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "output_parser-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "output_parser-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "output_parser-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "output_parser-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "output_parser",
+          "javascriptFunction": "return {\n  component: \"Structured output parser\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "output_parser-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 2720,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "loan_policy_scoring",
+      "position": {
+        "x": 3100,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "loan_policy_scoring",
+        "label": "Loan Policy Scoring",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Loan Policy Scoring",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "loan_policy_scoring-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "loan_policy_scoring-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "loan_policy_scoring-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "loan_policy_scoring-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "loan_policy_scoring",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/loan-policy/score\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/loan-policy/score\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "loan_policy_scoring-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 3100,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "dti",
+      "position": {
+        "x": 3100,
+        "y": 700
+      },
+      "type": "customNode",
+      "data": {
+        "id": "dti",
+        "label": "DTI",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "DTI",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "dti-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "dti-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "dti-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "dti-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "dti",
+          "javascriptFunction": "return {\n  component: \"DTI = monthly debt payments / monthly income\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "dti-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 3100,
+        "y": 700
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "ltv",
+      "position": {
+        "x": 3480,
+        "y": 700
+      },
+      "type": "customNode",
+      "data": {
+        "id": "ltv",
+        "label": "LTV",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "LTV",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "ltv-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "ltv-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "ltv-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "ltv-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "ltv",
+          "javascriptFunction": "return {\n  component: \"LTV = loan amount / collateral value\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "ltv-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 3480,
+        "y": 700
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "interest_rate",
+      "position": {
+        "x": 3860,
+        "y": 700
+      },
+      "type": "customNode",
+      "data": {
+        "id": "interest_rate",
+        "label": "Interest Rate",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Interest Rate",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "interest_rate-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "interest_rate-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "interest_rate-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "interest_rate-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "interest_rate",
+          "javascriptFunction": "return {\n  component: \"Estimated interest rate\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "interest_rate-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 3860,
+        "y": 700
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "monthly_payment",
+      "position": {
+        "x": 4240,
+        "y": 700
+      },
+      "type": "customNode",
+      "data": {
+        "id": "monthly_payment",
+        "label": "Monthly Payment",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Monthly Payment",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "monthly_payment-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "monthly_payment-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "monthly_payment-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "monthly_payment-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "monthly_payment",
+          "javascriptFunction": "return {\n  component: \"Estimated monthly payment\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "monthly_payment-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 4240,
+        "y": 700
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "recommendation",
+      "position": {
+        "x": 4620,
+        "y": 700
+      },
+      "type": "customNode",
+      "data": {
+        "id": "recommendation",
+        "label": "Recommendation",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Recommendation",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "recommendation-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "recommendation-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "recommendation-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "recommendation-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "recommendation",
+          "javascriptFunction": "return {\n  component: \"Policy recommendation\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "recommendation-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 4620,
+        "y": 700
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "approval_committee",
+      "position": {
+        "x": 3480,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "approval_committee",
+        "label": "Approval Committee",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Approval Committee",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "approval_committee-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "approval_committee-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "approval_committee-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "approval_committee-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "approval_committee",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/approval-committee/submit\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/approval-committee/submit\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "approval_committee-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 3480,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "final_decision",
+      "position": {
+        "x": 3860,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "final_decision",
+        "label": "Final Decision",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Final Decision",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "final_decision-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "final_decision-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "final_decision-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "final_decision-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "final_decision",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/final-decision\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/final-decision\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "final_decision-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 3860,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "customer_email_draft",
+      "position": {
+        "x": 4240,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "customer_email_draft",
+        "label": "Customer Email Draft",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Customer Email Draft",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "customer_email_draft-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "customer_email_draft-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "customer_email_draft-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "customer_email_draft-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "customer_email_draft",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/customer-decision-email/draft\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/customer-decision-email/draft\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "customer_email_draft-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 4240,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "audit_logging",
+      "position": {
+        "x": 4620,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "audit_logging",
+        "label": "Audit Logging",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Audit Logging",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "audit_logging-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "audit_logging-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "audit_logging-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "audit_logging-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "audit_logging",
+          "javascriptFunction": "const baseUrl = \"http://host.docker.internal:8000\";\nreturn {\n  component: \"/audit\",\n  method: \"POST\",\n  endpoint: baseUrl + \"/audit\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "audit_logging-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 4620,
+        "y": 260
+      },
+      "dragging": false
+    },
+    {
+      "width": 320,
+      "height": 300,
+      "id": "chat_output",
+      "position": {
+        "x": 5000,
+        "y": 260
+      },
+      "type": "customNode",
+      "data": {
+        "id": "chat_output",
+        "label": "Chat Output",
+        "version": 3,
+        "name": "customFunction",
+        "type": "CustomFunction",
+        "baseClasses": [
+          "CustomFunction",
+          "Utilities"
+        ],
+        "category": "Utilities",
+        "description": "Chat Output",
+        "inputParams": [
+          {
+            "label": "Input Variables",
+            "name": "functionInputVariables",
+            "type": "json",
+            "optional": true,
+            "acceptVariable": true,
+            "list": true,
+            "id": "chat_output-input-functionInputVariables-json"
+          },
+          {
+            "label": "Function Name",
+            "name": "functionName",
+            "type": "string",
+            "optional": true,
+            "id": "chat_output-input-functionName-string"
+          },
+          {
+            "label": "Javascript Function",
+            "name": "javascriptFunction",
+            "type": "code",
+            "id": "chat_output-input-javascriptFunction-code"
+          }
+        ],
+        "inputAnchors": [
+          {
+            "label": "Input",
+            "name": "input",
+            "type": "string | number | boolean | json | array",
+            "optional": true,
+            "id": "chat_output-input-input-string|number|boolean|json|array"
+          }
+        ],
+        "inputs": {
+          "functionInputVariables": "{}",
+          "functionName": "chat_output",
+          "javascriptFunction": "return {\n  component: \"Chat Output / UI Response\",\n  input: $input\n};"
+        },
+        "outputAnchors": [
+          {
+            "id": "chat_output-output-output-string|number|boolean|json|array",
+            "name": "output",
+            "label": "Output",
+            "type": "string | number | boolean | json | array"
+          }
+        ],
+        "outputs": {
+          "output": "output"
+        },
+        "selected": false
+      },
+      "selected": false,
+      "positionAbsolute": {
+        "x": 5000,
+        "y": 260
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "chat_input",
+      "sourceHandle": "chat_input-output-output-string|number|boolean|json|array",
+      "target": "runtime_vars",
+      "targetHandle": "runtime_vars-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "chat_input-chat_input-output-output-string|number|boolean|json|array-runtime_vars-runtime_vars-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "runtime_vars",
+      "sourceHandle": "runtime_vars-output-output-string|number|boolean|json|array",
+      "target": "http_retrieval_tool",
+      "targetHandle": "http_retrieval_tool-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "runtime_vars-runtime_vars-output-output-string|number|boolean|json|array-http_retrieval_tool-http_retrieval_tool-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "http_retrieval_tool",
+      "sourceHandle": "http_retrieval_tool-output-output-string|number|boolean|json|array",
+      "target": "retriever",
+      "targetHandle": "retriever-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "http_retrieval_tool-http_retrieval_tool-output-output-string|number|boolean|json|array-retriever-retriever-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "document_upload",
+      "sourceHandle": "document_upload-output-output-string|number|boolean|json|array",
+      "target": "parser",
+      "targetHandle": "parser-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "document_upload-document_upload-output-output-string|number|boolean|json|array-parser-parser-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "parser",
+      "sourceHandle": "parser-output-output-string|number|boolean|json|array",
+      "target": "chunker",
+      "targetHandle": "chunker-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "parser-parser-output-output-string|number|boolean|json|array-chunker-chunker-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "chunker",
+      "sourceHandle": "chunker-output-output-string|number|boolean|json|array",
+      "target": "embeddings",
+      "targetHandle": "embeddings-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "chunker-chunker-output-output-string|number|boolean|json|array-embeddings-embeddings-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "embeddings",
+      "sourceHandle": "embeddings-output-output-string|number|boolean|json|array",
+      "target": "postgresql",
+      "targetHandle": "postgresql-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "embeddings-embeddings-output-output-string|number|boolean|json|array-postgresql-postgresql-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "postgresql",
+      "sourceHandle": "postgresql-output-output-string|number|boolean|json|array",
+      "target": "pgvector",
+      "targetHandle": "pgvector-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "postgresql-postgresql-output-output-string|number|boolean|json|array-pgvector-pgvector-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "pgvector",
+      "sourceHandle": "pgvector-output-output-string|number|boolean|json|array",
+      "target": "retriever",
+      "targetHandle": "retriever-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "pgvector-pgvector-output-output-string|number|boolean|json|array-retriever-retriever-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "retriever",
+      "sourceHandle": "retriever-output-output-string|number|boolean|json|array",
+      "target": "citation_builder",
+      "targetHandle": "citation_builder-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "retriever-retriever-output-output-string|number|boolean|json|array-citation_builder-citation_builder-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "citation_builder",
+      "sourceHandle": "citation_builder-output-output-string|number|boolean|json|array",
+      "target": "credit_assessment",
+      "targetHandle": "credit_assessment-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "citation_builder-citation_builder-output-output-string|number|boolean|json|array-credit_assessment-credit_assessment-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "credit_assessment",
+      "sourceHandle": "credit_assessment-output-output-string|number|boolean|json|array",
+      "target": "output_parser",
+      "targetHandle": "output_parser-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "credit_assessment-credit_assessment-output-output-string|number|boolean|json|array-output_parser-output_parser-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "output_parser",
+      "sourceHandle": "output_parser-output-output-string|number|boolean|json|array",
+      "target": "loan_policy_scoring",
+      "targetHandle": "loan_policy_scoring-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "output_parser-output_parser-output-output-string|number|boolean|json|array-loan_policy_scoring-loan_policy_scoring-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "loan_policy_scoring",
+      "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
+      "target": "dti",
+      "targetHandle": "dti-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-dti-dti-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "loan_policy_scoring",
+      "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
+      "target": "ltv",
+      "targetHandle": "ltv-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-ltv-ltv-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "loan_policy_scoring",
+      "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
+      "target": "interest_rate",
+      "targetHandle": "interest_rate-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-interest_rate-interest_rate-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "loan_policy_scoring",
+      "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
+      "target": "monthly_payment",
+      "targetHandle": "monthly_payment-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-monthly_payment-monthly_payment-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "loan_policy_scoring",
+      "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
+      "target": "recommendation",
+      "targetHandle": "recommendation-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-recommendation-recommendation-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "dti",
+      "sourceHandle": "dti-output-output-string|number|boolean|json|array",
+      "target": "recommendation",
+      "targetHandle": "recommendation-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "dti-dti-output-output-string|number|boolean|json|array-recommendation-recommendation-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "ltv",
+      "sourceHandle": "ltv-output-output-string|number|boolean|json|array",
+      "target": "recommendation",
+      "targetHandle": "recommendation-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "ltv-ltv-output-output-string|number|boolean|json|array-recommendation-recommendation-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "interest_rate",
+      "sourceHandle": "interest_rate-output-output-string|number|boolean|json|array",
+      "target": "monthly_payment",
+      "targetHandle": "monthly_payment-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "interest_rate-interest_rate-output-output-string|number|boolean|json|array-monthly_payment-monthly_payment-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "monthly_payment",
+      "sourceHandle": "monthly_payment-output-output-string|number|boolean|json|array",
+      "target": "recommendation",
+      "targetHandle": "recommendation-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "monthly_payment-monthly_payment-output-output-string|number|boolean|json|array-recommendation-recommendation-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "recommendation",
+      "sourceHandle": "recommendation-output-output-string|number|boolean|json|array",
+      "target": "approval_committee",
+      "targetHandle": "approval_committee-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "recommendation-recommendation-output-output-string|number|boolean|json|array-approval_committee-approval_committee-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "approval_committee",
+      "sourceHandle": "approval_committee-output-output-string|number|boolean|json|array",
+      "target": "final_decision",
+      "targetHandle": "final_decision-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "approval_committee-approval_committee-output-output-string|number|boolean|json|array-final_decision-final_decision-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "final_decision",
+      "sourceHandle": "final_decision-output-output-string|number|boolean|json|array",
+      "target": "customer_email_draft",
+      "targetHandle": "customer_email_draft-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "final_decision-final_decision-output-output-string|number|boolean|json|array-customer_email_draft-customer_email_draft-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "customer_email_draft",
+      "sourceHandle": "customer_email_draft-output-output-string|number|boolean|json|array",
+      "target": "audit_logging",
+      "targetHandle": "audit_logging-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "customer_email_draft-customer_email_draft-output-output-string|number|boolean|json|array-audit_logging-audit_logging-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "audit_logging",
+      "sourceHandle": "audit_logging-output-output-string|number|boolean|json|array",
+      "target": "chat_output",
+      "targetHandle": "chat_output-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "audit_logging-audit_logging-output-output-string|number|boolean|json|array-chat_output-chat_output-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "chat_output",
+      "sourceHandle": "chat_output-output-output-string|number|boolean|json|array",
+      "target": "prompt_template",
+      "targetHandle": "prompt_template-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "chat_output-chat_output-output-output-string|number|boolean|json|array-prompt_template-prompt_template-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "citation_builder",
+      "sourceHandle": "citation_builder-output-output-string|number|boolean|json|array",
+      "target": "llm_router",
+      "targetHandle": "llm_router-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "citation_builder-citation_builder-output-output-string|number|boolean|json|array-llm_router-llm_router-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "llm_router",
+      "sourceHandle": "llm_router-output-output-string|number|boolean|json|array",
+      "target": "ollama_mistral",
+      "targetHandle": "ollama_mistral-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "llm_router-llm_router-output-output-string|number|boolean|json|array-ollama_mistral-ollama_mistral-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "ollama_mistral",
+      "sourceHandle": "ollama_mistral-output-output-string|number|boolean|json|array",
+      "target": "openai_provider",
+      "targetHandle": "openai_provider-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "ollama_mistral-ollama_mistral-output-output-string|number|boolean|json|array-openai_provider-openai_provider-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "openai_provider",
+      "sourceHandle": "openai_provider-output-output-string|number|boolean|json|array",
+      "target": "deepseek_provider",
+      "targetHandle": "deepseek_provider-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "openai_provider-openai_provider-output-output-string|number|boolean|json|array-deepseek_provider-deepseek_provider-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "deepseek_provider",
+      "sourceHandle": "deepseek_provider-output-output-string|number|boolean|json|array",
+      "target": "custom_provider",
+      "targetHandle": "custom_provider-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "deepseek_provider-deepseek_provider-output-output-string|number|boolean|json|array-custom_provider-custom_provider-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "custom_provider",
+      "sourceHandle": "custom_provider-output-output-string|number|boolean|json|array",
+      "target": "prompt_template",
+      "targetHandle": "prompt_template-input-input-string|number|boolean|json|array",
+      "type": "buttonedge",
+      "id": "custom_provider-custom_provider-output-output-string|number|boolean|json|array-prompt_template-prompt_template-input-input-string|number|boolean|json|array"
+    },
+    {
+      "source": "prompt_template",
+      "sourceHandle": "prompt_template-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate",
+      "target": "llm_chain",
+      "targetHandle": "llm_chain-input-prompt-BasePromptTemplate",
+      "type": "buttonedge",
+      "id": "prompt_template-prompt_template-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate-llm_chain-llm_chain-input-prompt-BasePromptTemplate"
+    },
+    {
+      "source": "ollama_gemma",
+      "sourceHandle": "ollama_gemma-output-chatOllama-ChatOllama|BaseChatModel|BaseLanguageModel|Runnable",
+      "target": "llm_chain",
+      "targetHandle": "llm_chain-input-model-BaseLanguageModel",
+      "type": "buttonedge",
+      "id": "ollama_gemma-ollama_gemma-output-chatOllama-ChatOllama|BaseChatModel|BaseLanguageModel|Runnable-llm_chain-llm_chain-input-model-BaseLanguageModel"
+    }
+  ],
+  "viewport": {
+    "x": 20,
+    "y": 50,
+    "zoom": 0.45
+  }
+}

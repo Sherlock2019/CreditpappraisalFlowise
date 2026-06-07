@@ -1,0 +1,9 @@
+{
+  "question": "Summarize customer credit risk.",
+  "overrideConfig": {
+    "vars": {
+      "customer_id": "1",
+      "context": "No uploaded customer documents were retrieved."
+    }
+  }
+}

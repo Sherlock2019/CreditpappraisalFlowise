@@ -1,0 +1,197 @@
+{
+  "repo_root": "/home/dzoan/docfactorFlowise",
+  "frontend": [
+    {
+      "name": "Banking Credit Scoring Assistant Streamlit UI",
+      "path": "bank-credit-ai-poc/frontend/streamlit_app.py",
+      "type": "streamlit",
+      "detected_api_calls": [
+        "GET /customers",
+        "POST /customers",
+        "GET /documents?customer_id={customer_id}",
+        "POST /documents/upload",
+        "POST /ingest/{document_id}",
+        "POST /chat",
+        "POST /credit-assessment/{customer_id}",
+        "GET /connectors/options",
+        "POST /connectors/test",
+        "POST /connectors/list-documents",
+        "POST /connectors/ingest"
+      ],
+      "env_vars": [
+        "BACKEND_URL"
+      ],
+      "ui_pages": [
+        "Settings sidebar",
+        "LLM Provider selector",
+        "Customer Profile form",
+        "Documents workflow",
+        "Connector configuration forms",
+        "Chat panel",
+        "Credit Assessment panel"
+      ],
+      "workflow_stages": [
+        "customer intake",
+        "document source selection",
+        "document upload/import",
+        "document ingestion",
+        "chatbot interaction",
+        "credit assessment",
+        "human review"
+      ]
+    },
+    {
+      "name": "Docfactor Launcher HTML UI",
+      "path": "index.html",
+      "type": "html",
+      "detected_api_calls": [
+        "GET /health",
+        "GET Streamlit UI",
+        "GET Flowise UI"
+      ],
+      "env_vars": []
+    }
+  ],
+  "backend": [
+    {
+      "name": "FastAPI credit appraisal backend",
+      "path": "bank-credit-ai-poc/backend/app",
+      "framework": "fastapi",
+      "endpoints": [
+        "GET /health",
+        "POST /customers",
+        "GET /customers",
+        "GET /customers/{customer_id}",
+        "GET /documents",
+        "POST /documents/upload",
+        "POST /ingest/{document_id}",
+        "POST /chat",
+        "GET /retrieval/{customer_id}",
+        "GET /llm/provider-options",
+        "POST /credit-assessment/{customer_id}",
+        "GET /connectors/options",
+        "POST /connectors/test",
+        "POST /connectors/list-documents",
+        "POST /connectors/ingest"
+      ],
+      "routers": [
+        "bank-credit-ai-poc/backend/app/routers/health.py",
+        "bank-credit-ai-poc/backend/app/routers/customers.py",
+        "bank-credit-ai-poc/backend/app/routers/documents.py",
+        "bank-credit-ai-poc/backend/app/routers/chat.py",
+        "bank-credit-ai-poc/backend/app/routers/credit_assessment.py",
+        "bank-credit-ai-poc/backend/app/routers/connectors.py"
+      ],
+      "config_files": [
+        "bank-credit-ai-poc/backend/app/config.py",
+        "bank-credit-ai-poc/.env",
+        "bank-credit-ai-poc/docker-compose.yml"
+      ]
+    }
+  ],
+  "rag": {
+    "document_sources": [
+      "manual_upload",
+      "s3",
+      "sharepoint",
+      "opentext",
+      "hyland",
+      "filenet",
+      "servicenow",
+      "salesforce",
+      "cloud_storage"
+    ],
+    "chunking": [
+      {
+        "path": "bank-credit-ai-poc/backend/app/document_parser.py",
+        "function": "chunk_sections",
+        "notes": "Chunks parsed PDF/TXT/CSV/XLSX/XLS sections with overlap."
+      }
+    ],
+    "embedding": [
+      {
+        "path": "bank-credit-ai-poc/backend/app/embeddings.py",
+        "provider": "OpenAI embeddings by default",
+        "env": "EMBEDDING_MODEL"
+      }
+    ],
+    "vector_db": [
+      {
+        "provider": "PostgreSQL pgvector",
+        "schema": "bank-credit-ai-poc/db/init.sql",
+        "table": "document_chunks.embedding VECTOR(1536)"
+      }
+    ],
+    "databases": [
+      {
+        "provider": "PostgreSQL",
+        "url_env": "DATABASE_URL",
+        "tables": [
+          "customers",
+          "documents",
+          "document_chunks",
+          "chat_sessions",
+          "chat_messages",
+          "credit_assessments",
+          "audit_logs"
+        ]
+      }
+    ]
+  },
+  "llm_providers": [
+    {
+      "name": "OpenAI",
+      "source": "bank-credit-ai-poc/backend/app/llm_providers/openai_provider.py",
+      "env": [
+        "OPENAI_API_KEY",
+        "OPENAI_MODEL"
+      ]
+    },
+    {
+      "name": "DeepSeek",
+      "source": "bank-credit-ai-poc/backend/app/llm_providers/deepseek_provider.py",
+      "env": [
+        "DEEPSEEK_API_KEY",
+        "DEEPSEEK_BASE_URL",
+        "DEEPSEEK_MODEL"
+      ]
+    },
+    {
+      "name": "Custom Public API",
+      "source": "bank-credit-ai-poc/backend/app/llm_providers/custom_public_provider.py",
+      "env": [
+        "CUSTOM_PUBLIC_API_BASE_URL",
+        "CUSTOM_PUBLIC_API_KEY",
+        "CUSTOM_PUBLIC_API_MODEL"
+      ]
+    },
+    {
+      "name": "Local Mistral via Ollama",
+      "source": "bank-credit-ai-poc/backend/app/llm_providers/ollama_provider.py",
+      "env": [
+        "OLLAMA_BASE_URL",
+        "OLLAMA_MODEL"
+      ]
+    }
+  ],
+  "workflow_stages": [
+    "customer intake",
+    "document source selection",
+    "manual upload",
+    "enterprise connector test",
+    "external document list",
+    "external document ingest",
+    "document parsing",
+    "chunking",
+    "embedding",
+    "pgvector indexing",
+    "RAG retrieval",
+    "LLM provider routing",
+    "Flowise orchestration",
+    "credit-risk chatbot interaction",
+    "credit assessment generation",
+    "citation return",
+    "audit logging",
+    "human review"
+  ]
+}

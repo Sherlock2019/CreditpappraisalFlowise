@@ -1,0 +1,143 @@
+{
+  "name": "PoC Backend API Tools Workflow",
+  "description": "Flowise tool workflow for real FastAPI backend endpoints discovered in the PoC.",
+  "deployed": false,
+  "isPublic": false,
+  "type": "CHATFLOW",
+  "category": "PoC;AI-Agent-Hub;RAG;Migration",
+  "flowData": {
+    "nodes": [
+      {
+        "id": "node_start",
+        "type": "customNode",
+        "position": {
+          "x": 0,
+          "y": 180
+        },
+        "data": {
+          "label": "Tool Request",
+          "component": "Chat Input",
+          "inputs": {
+            "tool_action": "health | customers | documents | connectors | retrieval | chat | assessment",
+            "customer_id": "{{$vars.customer_id}}"
+          }
+        },
+        "width": 300,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_api_call_tool",
+        "type": "customNode",
+        "position": {
+          "x": 380,
+          "y": 40
+        },
+        "data": {
+          "label": "FastAPI HTTP Tool",
+          "component": "Custom Tool / HTTP Request",
+          "base_url_env": "POC_BACKEND_BASE_URL",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/main.py",
+            "bank-credit-ai-poc/backend/app/routers/health.py",
+            "bank-credit-ai-poc/backend/app/routers/customers.py",
+            "bank-credit-ai-poc/backend/app/routers/documents.py",
+            "bank-credit-ai-poc/backend/app/routers/chat.py",
+            "bank-credit-ai-poc/backend/app/routers/credit_assessment.py",
+            "bank-credit-ai-poc/backend/app/routers/connectors.py"
+          ],
+          "endpoints": [
+            "GET /health",
+            "POST /customers",
+            "GET /customers",
+            "GET /customers/{customer_id}",
+            "GET /documents",
+            "POST /documents/upload",
+            "POST /ingest/{document_id}",
+            "POST /chat",
+            "GET /retrieval/{customer_id}",
+            "POST /credit-assessment/{customer_id}",
+            "GET /connectors/options",
+            "POST /connectors/test",
+            "POST /connectors/list-documents",
+            "POST /connectors/ingest"
+          ]
+        },
+        "width": 420,
+        "height": 420,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_backend_tool_router",
+        "type": "customNode",
+        "position": {
+          "x": 880,
+          "y": 40
+        },
+        "data": {
+          "label": "API Tool Router",
+          "component": "Conditional Router",
+          "routes": [
+            "customer_profile",
+            "document_upload",
+            "document_ingest",
+            "connector_test",
+            "connector_list_documents",
+            "connector_ingest",
+            "retrieval",
+            "chat",
+            "credit_assessment"
+          ]
+        },
+        "width": 360,
+        "height": 320,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_final_response",
+        "type": "customNode",
+        "position": {
+          "x": 1320,
+          "y": 160
+        },
+        "data": {
+          "label": "Tool Response",
+          "component": "Tool Output",
+          "purpose": "Returns backend JSON response to Flowise orchestration or frontend caller."
+        },
+        "width": 320,
+        "height": 200,
+        "selected": false,
+        "dragging": false
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_api",
+        "source": "node_start",
+        "target": "node_api_call_tool",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_api_router",
+        "source": "node_api_call_tool",
+        "target": "node_backend_tool_router",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_router_final",
+        "source": "node_backend_tool_router",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      }
+    ],
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 0.85
+    }
+  }
+}

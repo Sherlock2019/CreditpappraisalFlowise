@@ -1,0 +1,72 @@
+{
+  "name": "Docfactor PoC Flowise Workspace Export",
+  "description": "Workspace-level wrapper referencing generated Flowise chatflow exports from the real PoC repository.",
+  "repo_root": "/home/dzoan/docfactorFlowise",
+  "generated_at": "deterministic",
+  "category": "PoC;AI-Agent-Hub;RAG;Migration",
+  "chatflows": [
+    {
+      "name": "Docfactor All In One Flowise Orchestration",
+      "file": "generated/docfactor-all-in-one-flowise-chatflow.json",
+      "purpose": "Single importable Flowise canvas containing the complete PoC workflow."
+    },
+    {
+      "name": "PoC Main Credit Appraisal Orchestration",
+      "file": "generated/poc-main-chatflow.json",
+      "purpose": "Main frontend-to-backend-to-RAG-to-LLM orchestration."
+    },
+    {
+      "name": "PoC RAG Document Workflow",
+      "file": "generated/poc-rag-document-chatflow.json",
+      "purpose": "Document source, ingestion, chunking, embedding, indexing, and retrieval workflow."
+    },
+    {
+      "name": "PoC Backend API Tools Workflow",
+      "file": "generated/poc-api-tools-chatflow.json",
+      "purpose": "HTTP/API tools for real FastAPI endpoints."
+    },
+    {
+      "name": "PoC LLM Provider Router",
+      "file": "generated/poc-llm-router-chatflow.json",
+      "purpose": "Provider routing for OpenAI, DeepSeek, and Local Mistral via Ollama."
+    }
+  ],
+  "credentials": {
+    "openai": "{{FLOWISE_CREDENTIAL_OPENAI}}",
+    "deepseek": "{{FLOWISE_CREDENTIAL_DEEPSEEK}}",
+    "embeddings": "{{FLOWISE_CREDENTIAL_EMBEDDINGS}}"
+  },
+  "environment": {
+    "backend": "POC_BACKEND_BASE_URL",
+    "frontend": "POC_FRONTEND_BASE_URL",
+    "ollama": "OLLAMA_BASE_URL",
+    "vector_db": "VECTOR_DB_URL"
+  },
+  "flowData": {
+    "nodes": [
+      {
+        "id": "node_start",
+        "type": "customNode",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "label": "Workspace Export",
+          "component": "Metadata",
+          "purpose": "References generated chatflows for import."
+        },
+        "width": 320,
+        "height": 200,
+        "selected": false,
+        "dragging": false
+      }
+    ],
+    "edges": [],
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
+  }
+}

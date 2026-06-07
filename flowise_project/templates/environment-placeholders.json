@@ -1,0 +1,72 @@
+{
+  "document_sources": {
+    "local_upload": {
+      "enabled": true,
+      "env": []
+    },
+    "s3": {
+      "enabled_env": "S3_ENABLED",
+      "required_env": [
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_REGION",
+        "S3_BUCKET"
+      ]
+    },
+    "sharepoint": {
+      "enabled_env": "SHAREPOINT_ENABLED",
+      "required_env": [
+        "SHAREPOINT_TENANT_ID",
+        "SHAREPOINT_CLIENT_ID",
+        "SHAREPOINT_CLIENT_SECRET",
+        "SHAREPOINT_SITE_ID"
+      ]
+    },
+    "opentext": {
+      "enabled_env": "OPENTEXT_ENABLED",
+      "required_env": [
+        "OPENTEXT_BASE_URL",
+        "OPENTEXT_CLIENT_ID",
+        "OPENTEXT_CLIENT_SECRET"
+      ]
+    },
+    "hyland": {
+      "enabled_env": "HYLAND_ENABLED",
+      "required_env": [
+        "HYLAND_BASE_URL",
+        "HYLAND_API_KEY"
+      ]
+    },
+    "filenet": {
+      "enabled_env": "FILENET_ENABLED",
+      "required_env": [
+        "FILENET_BASE_URL",
+        "FILENET_USERNAME",
+        "FILENET_PASSWORD"
+      ]
+    },
+    "servicenow": {
+      "enabled_env": "SERVICENOW_ENABLED",
+      "required_env": [
+        "SERVICENOW_INSTANCE_URL",
+        "SERVICENOW_USERNAME",
+        "SERVICENOW_PASSWORD"
+      ]
+    },
+    "salesforce": {
+      "enabled_env": "SALESFORCE_ENABLED",
+      "required_env": [
+        "SALESFORCE_CLIENT_ID",
+        "SALESFORCE_CLIENT_SECRET",
+        "SALESFORCE_REFRESH_TOKEN"
+      ]
+    },
+    "cloud_storage": {
+      "enabled_env": "CLOUD_STORAGE_ENABLED",
+      "required_env": [
+        "CLOUD_STORAGE_PROVIDER",
+        "CLOUD_STORAGE_BUCKET_OR_CONTAINER"
+      ]
+    }
+  }
+}

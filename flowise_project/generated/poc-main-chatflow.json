@@ -1,0 +1,337 @@
+{
+  "name": "PoC Main Credit Appraisal Orchestration",
+  "description": "Main Flowise orchestration package generated from the real Docfactor credit appraisal PoC.",
+  "deployed": false,
+  "isPublic": false,
+  "type": "CHATFLOW",
+  "category": "PoC;AI-Agent-Hub;RAG;Migration",
+  "flowData": {
+    "nodes": [
+      {
+        "id": "node_start",
+        "type": "customNode",
+        "position": {
+          "x": 0,
+          "y": 160
+        },
+        "data": {
+          "label": "Frontend Request",
+          "component": "Chat Input / API Caller",
+          "source_files": [
+            "bank-credit-ai-poc/frontend/streamlit_app.py",
+            "index.html"
+          ],
+          "inputs": {
+            "question": "{{question}}",
+            "customer_id": "{{$vars.customer_id}}",
+            "workflow": "chat | credit_assessment | upload | connector"
+          }
+        },
+        "width": 300,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_input_classifier",
+        "type": "customNode",
+        "position": {
+          "x": 360,
+          "y": 40
+        },
+        "data": {
+          "label": "Workflow Classifier",
+          "component": "Conditional Router",
+          "purpose": "Routes customer intake, document workflow, connector workflow, chat, and credit assessment requests.",
+          "routes": [
+            "customer_intake",
+            "document_ingestion",
+            "rag_query",
+            "connector_action",
+            "credit_assessment",
+            "human_review"
+          ]
+        },
+        "width": 320,
+        "height": 260,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_backend_tool_router",
+        "type": "customNode",
+        "position": {
+          "x": 740,
+          "y": 40
+        },
+        "data": {
+          "label": "Backend API Tool Router",
+          "component": "Tool Router",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/routers/customers.py",
+            "bank-credit-ai-poc/backend/app/routers/documents.py",
+            "bank-credit-ai-poc/backend/app/routers/connectors.py",
+            "bank-credit-ai-poc/backend/app/routers/chat.py",
+            "bank-credit-ai-poc/backend/app/routers/credit_assessment.py"
+          ],
+          "base_url_env": "POC_BACKEND_BASE_URL",
+          "endpoints": [
+            "GET /health",
+            "POST /customers",
+            "GET /customers",
+            "POST /documents/upload",
+            "POST /ingest/{document_id}",
+            "GET /retrieval/{customer_id}",
+            "POST /connectors/test",
+            "POST /connectors/list-documents",
+            "POST /connectors/ingest"
+          ]
+        },
+        "width": 360,
+        "height": 340,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_rag_router",
+        "type": "customNode",
+        "position": {
+          "x": 740,
+          "y": 440
+        },
+        "data": {
+          "label": "RAG Context Router",
+          "component": "Retriever Router",
+          "purpose": "Uses FastAPI retrieval endpoint backed by PostgreSQL pgvector.",
+          "retrieval_endpoint": "GET /retrieval/{customer_id}?question={question}&top_k=8",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/rag.py",
+            "bank-credit-ai-poc/db/init.sql"
+          ]
+        },
+        "width": 360,
+        "height": 240,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_llm_router",
+        "type": "customNode",
+        "position": {
+          "x": 1160,
+          "y": 220
+        },
+        "data": {
+          "label": "LLM Router",
+          "component": "Conditional Router",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/llm_providers/factory.py",
+            "bank-credit-ai-poc/frontend/streamlit_app.py"
+          ],
+          "providers": [
+            "openai",
+            "deepseek",
+            "custom_public_api",
+            "local_mistral_ollama"
+          ]
+        },
+        "width": 340,
+        "height": 260,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_openai",
+        "type": "customNode",
+        "position": {
+          "x": 1580,
+          "y": 0
+        },
+        "data": {
+          "label": "OpenAI Chat Model",
+          "component": "ChatOpenAI",
+          "credentialRef": "{{FLOWISE_CREDENTIAL_OPENAI}}",
+          "enabled_env": "OPENAI_API_KEY",
+          "models": [
+            "gpt-4.1",
+            "gpt-4.1-mini",
+            "gpt-4o",
+            "gpt-4o-mini"
+          ]
+        },
+        "width": 320,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_deepseek",
+        "type": "customNode",
+        "position": {
+          "x": 1580,
+          "y": 260
+        },
+        "data": {
+          "label": "DeepSeek Chat Model",
+          "component": "OpenAI-Compatible Chat Model",
+          "credentialRef": "{{FLOWISE_CREDENTIAL_DEEPSEEK}}",
+          "base_url_env": "DEEPSEEK_BASE_URL",
+          "enabled_env": "DEEPSEEK_API_KEY",
+          "models": [
+            "deepseek-chat",
+            "deepseek-reasoner"
+          ]
+        },
+        "width": 320,
+        "height": 240,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_ollama_mistral",
+        "type": "customNode",
+        "position": {
+          "x": 1580,
+          "y": 540
+        },
+        "data": {
+          "label": "Local Mistral via Ollama",
+          "component": "ChatOllama",
+          "base_url_env": "OLLAMA_BASE_URL",
+          "model_env": "OLLAMA_LOCAL_MODEL",
+          "allowed_models": [
+            "mistral",
+            "mistral:7b-instruct",
+            "mistral-small"
+          ]
+        },
+        "width": 320,
+        "height": 240,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_document_retriever",
+        "type": "customNode",
+        "position": {
+          "x": 1160,
+          "y": 560
+        },
+        "data": {
+          "label": "Document Retriever",
+          "component": "Backend Retrieval Tool",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/rag.py"
+          ],
+          "purpose": "Returns retrieved chunks and citations for Flowise prompt context."
+        },
+        "width": 340,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_final_response",
+        "type": "customNode",
+        "position": {
+          "x": 2020,
+          "y": 260
+        },
+        "data": {
+          "label": "Final Credit Support Answer",
+          "component": "LLM Chain / Chat Output",
+          "guardrails": [
+            "Decision support only",
+            "Do not approve or reject loans",
+            "Use retrieved context only",
+            "Return citations",
+            "Human credit officer review required"
+          ]
+        },
+        "width": 360,
+        "height": 280,
+        "selected": false,
+        "dragging": false
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_classifier",
+        "source": "node_start",
+        "target": "node_input_classifier",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_classifier_backend",
+        "source": "node_input_classifier",
+        "target": "node_backend_tool_router",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_classifier_rag",
+        "source": "node_input_classifier",
+        "target": "node_rag_router",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_backend_retriever",
+        "source": "node_backend_tool_router",
+        "target": "node_document_retriever",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_rag_retriever",
+        "source": "node_rag_router",
+        "target": "node_document_retriever",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_retriever_llm_router",
+        "source": "node_document_retriever",
+        "target": "node_llm_router",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_llm_openai",
+        "source": "node_llm_router",
+        "target": "node_openai",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_llm_deepseek",
+        "source": "node_llm_router",
+        "target": "node_deepseek",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_llm_ollama",
+        "source": "node_llm_router",
+        "target": "node_ollama_mistral",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_openai_final",
+        "source": "node_openai",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_deepseek_final",
+        "source": "node_deepseek",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_ollama_final",
+        "source": "node_ollama_mistral",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      }
+    ],
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 0.65
+    }
+  }
+}

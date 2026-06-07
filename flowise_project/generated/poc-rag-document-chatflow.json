@@ -1,0 +1,222 @@
+{
+  "name": "PoC RAG Document Workflow",
+  "description": "Document upload, connector import, parsing, chunking, embedding, pgvector indexing, and retrieval workflow mapped from the real PoC.",
+  "deployed": false,
+  "isPublic": false,
+  "type": "CHATFLOW",
+  "category": "PoC;AI-Agent-Hub;RAG;Migration",
+  "flowData": {
+    "nodes": [
+      {
+        "id": "node_start",
+        "type": "customNode",
+        "position": {
+          "x": 0,
+          "y": 160
+        },
+        "data": {
+          "label": "Document Source Selection",
+          "component": "Frontend Dropdown",
+          "source_files": [
+            "bank-credit-ai-poc/frontend/streamlit_app.py"
+          ],
+          "sources": [
+            "manual_upload",
+            "s3",
+            "sharepoint",
+            "opentext",
+            "hyland",
+            "filenet",
+            "servicenow",
+            "salesforce",
+            "cloud_storage"
+          ]
+        },
+        "width": 320,
+        "height": 300,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_backend_tool_router",
+        "type": "customNode",
+        "position": {
+          "x": 400,
+          "y": 80
+        },
+        "data": {
+          "label": "Upload / Connector Router",
+          "component": "Backend API Tool Router",
+          "endpoints": [
+            "POST /documents/upload",
+            "POST /connectors/test",
+            "POST /connectors/list-documents",
+            "POST /connectors/ingest"
+          ],
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/routers/documents.py",
+            "bank-credit-ai-poc/backend/app/routers/connectors.py",
+            "bank-credit-ai-poc/backend/app/connectors/factory.py"
+          ]
+        },
+        "width": 360,
+        "height": 280,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_document_retriever",
+        "type": "customNode",
+        "position": {
+          "x": 820,
+          "y": 80
+        },
+        "data": {
+          "label": "Parse And Chunk Document",
+          "component": "Document Loader / Text Splitter",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/document_parser.py"
+          ],
+          "functions": [
+            "parse_document",
+            "chunk_sections"
+          ]
+        },
+        "width": 340,
+        "height": 240,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_embedding",
+        "type": "customNode",
+        "position": {
+          "x": 1220,
+          "y": 80
+        },
+        "data": {
+          "label": "Embedding",
+          "component": "Embedding Model",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/embeddings.py"
+          ],
+          "provider_env": "EMBEDDING_PROVIDER",
+          "model_env": "EMBEDDING_MODEL",
+          "credentialRef": "{{FLOWISE_CREDENTIAL_EMBEDDINGS}}"
+        },
+        "width": 340,
+        "height": 240,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_vector_store",
+        "type": "customNode",
+        "position": {
+          "x": 1620,
+          "y": 80
+        },
+        "data": {
+          "label": "PostgreSQL pgvector Store",
+          "component": "Vector Store / SQL Tool",
+          "schema_file": "bank-credit-ai-poc/db/init.sql",
+          "tables": [
+            "documents",
+            "document_chunks"
+          ]
+        },
+        "width": 340,
+        "height": 240,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_rag_router",
+        "type": "customNode",
+        "position": {
+          "x": 820,
+          "y": 420
+        },
+        "data": {
+          "label": "RAG Query",
+          "component": "Retriever",
+          "endpoint": "GET /retrieval/{customer_id}?question={question}&top_k=8",
+          "source_files": [
+            "bank-credit-ai-poc/backend/app/rag.py",
+            "bank-credit-ai-poc/backend/app/routers/chat.py"
+          ]
+        },
+        "width": 360,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "node_final_response",
+        "type": "customNode",
+        "position": {
+          "x": 1220,
+          "y": 420
+        },
+        "data": {
+          "label": "Retrieved Context With Citations",
+          "component": "Tool Output",
+          "output_fields": [
+            "chunk_text",
+            "filename",
+            "page_number",
+            "metadata",
+            "citations"
+          ]
+        },
+        "width": 360,
+        "height": 220,
+        "selected": false,
+        "dragging": false
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_backend",
+        "source": "node_start",
+        "target": "node_backend_tool_router",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_backend_parser",
+        "source": "node_backend_tool_router",
+        "target": "node_document_retriever",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_parser_embedding",
+        "source": "node_document_retriever",
+        "target": "node_embedding",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_embedding_store",
+        "source": "node_embedding",
+        "target": "node_vector_store",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_store_rag",
+        "source": "node_vector_store",
+        "target": "node_rag_router",
+        "type": "buttonedge"
+      },
+      {
+        "id": "edge_rag_final",
+        "source": "node_rag_router",
+        "target": "node_final_response",
+        "type": "buttonedge"
+      }
+    ],
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 0.72
+    }
+  }
+}

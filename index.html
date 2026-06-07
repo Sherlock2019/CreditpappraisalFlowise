@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HYPERSPEED CREDIT LOAN OFFICER</title>
+    <link rel="stylesheet" href="banking-main.css?v=20260607-main18" />
+  </head>
+  <body>
+    <div class="bg-animation"></div>
+    <div class="grid-overlay"></div>
+    <div id="particles" class="particles"></div>
+
+    <div class="app-container">
+      <aside id="sidebar" class="bank-sidebar">
+        <div class="logo-section">
+          <div class="logo-icon">H</div>
+          <div>
+            <div class="logo-text">HYPERSPEED CREDIT LOAN OFFICER</div>
+            <div class="logo-sub">AI Credit Copilot</div>
+          </div>
+        </div>
+
+        <section class="sidebar-workflow">
+          <div class="nav-label">Workflow</div>
+          <div id="workflowSteps" class="workflow-steps sidebar-workflow-steps"></div>
+        </section>
+
+        <div class="status-card">
+          <div class="status-header"><span class="status-dot"></span> System Status</div>
+          <div class="status-item-sm"><span>API Latency</span><strong id="statusLatency">--</strong></div>
+          <div class="status-item-sm"><span>Models Active</span><strong id="statusModels">4/4</strong></div>
+          <div class="status-item-sm"><span>Queue Depth</span><strong>0</strong></div>
+          <div class="status-item-sm"><span>Uptime</span><strong id="statusUptime">--</strong></div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="top-bar">
+          <div>
+            <h1 id="pageTitle" class="page-title">HYPERSPEED CREDIT LOAN OFFICER</h1>
+            <p class="page-subtitle">Put your credit loan process ton hyper speed on secured bullet train track to provide the best loans at record time for your customers</p>
+          </div>
+          <div class="top-actions">
+            <label class="top-model-picker">
+              <span>Model</span>
+              <select id="topModelSelect">
+                <option value="local_mistral_ollama|gemma2:9b">Gemma 2 9B</option>
+                <option value="local_mistral_ollama|mistral">Mistral</option>
+                <option value="ollama|mistral">Ollama Mistral</option>
+                <option value="openai|gpt-4o-mini">OpenAI GPT-4o mini</option>
+                <option value="deepseek|deepseek-chat">DeepSeek Chat</option>
+              </select>
+            </label>
+            <a class="btn btn-glass" href="http://127.0.0.1:3001/canvas/6f946e8b-2d35-4fd4-9ff9-158db1f0b820" target="_blank" rel="noreferrer">Flowise</a>
+          </div>
+        </header>
+
+        <section id="view-dashboard" class="view active">
+          <div class="stats-grid">
+            <article class="stat-card"><div class="stat-icon credit">$</div><div id="dashAssessments" class="stat-value">--</div><div class="stat-label">Credit Assessments</div><div class="stat-change">Live backend</div></article>
+            <article class="stat-card"><div class="stat-icon asset">AS</div><div id="dashAssets" class="stat-value">--</div><div class="stat-label">Assets Appraised</div><div class="stat-change">Per customer</div></article>
+            <article class="stat-card"><div class="stat-icon customer">CU</div><div id="dashCustomers" class="stat-value">--</div><div class="stat-label">Active Customers</div><div class="stat-change">FastAPI</div></article>
+            <article class="stat-card"><div class="stat-icon doc">DO</div><div id="dashDocs" class="stat-value">--</div><div class="stat-label">Documents Analyzed</div><div class="stat-change down">RAG corpus</div></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Credit Score Distribution</h2><button class="panel-btn" data-view-link="credit">Open</button></div>
+              <div class="panel-body chart-container"><div id="scoreBars" class="chart-bar"></div></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Asset Allocation by Class</h2><button class="panel-btn" data-view-link="asset">Open</button></div>
+              <div class="panel-body">
+                <div class="donut-chart">
+                  <svg width="200" height="200" viewBox="0 0 200 200">
+                    <circle class="donut-bg" cx="100" cy="100" r="70"></circle>
+                    <circle class="donut-segment seg1" cx="100" cy="100" r="70"></circle>
+                    <circle class="donut-segment seg2" cx="100" cy="100" r="70"></circle>
+                    <circle class="donut-segment seg3" cx="100" cy="100" r="70"></circle>
+                  </svg>
+                  <div class="donut-center"><div id="assetDonutValue" class="donut-value">--</div><div class="donut-label">Total Assets</div></div>
+                </div>
+                <div id="assetLegend" class="legend"></div>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Credit Appraisal Case File</h2>
+              <a class="panel-btn" href="credit-appraisal.html">Open full appraisal</a>
+            </div>
+            <div class="panel-body">
+              <div class="appraisal-grid">
+                <div class="case-card"><span>Borrower</span><strong id="appraisalBorrower">--</strong><small id="appraisalBorrowerMeta">Select a customer</small></div>
+                <div class="case-card"><span>Document Evidence</span><strong id="appraisalEvidence">--</strong><small>Uploaded / ingested RAG source docs</small></div>
+                <div class="case-card"><span>Collateral</span><strong id="appraisalCollateral">--</strong><small>Eligible collateral after haircut</small></div>
+                <div class="case-card"><span>Workflow Stage</span><strong id="appraisalStage">--</strong><small>Credit appraisal readiness</small></div>
+              </div>
+              <div class="dashboard-grid compact-grid">
+                <div>
+                  <h3>Evidence Checklist</h3>
+                  <div id="appraisalChecklistDashboard" class="checklist"></div>
+                </div>
+                <div>
+                  <h3>Credit Officer Prompts</h3>
+                  <div class="prompt-list">
+                    <button data-credit-prompt="Summarize credit risk with citations">Summarize credit risk with citations</button>
+                    <button data-credit-prompt="Calculate DTI/LTV policy result">Calculate DTI/LTV policy result</button>
+                    <button data-credit-prompt="Review collateral coverage">Review collateral coverage</button>
+                    <button data-credit-prompt="List missing documents">List missing documents</button>
+                    <button data-credit-prompt="Prepare committee summary">Prepare committee summary</button>
+                    <button data-credit-prompt="Draft customer follow-up email">Draft customer follow-up email</button>
+                  </div>
+                </div>
+              </div>
+              <div class="guardrail-box">Decision support only. AI must not approve or reject loans. Human credit officer review required.</div>
+            </div>
+          </section>
+
+          <section id="askLisa" class="dashboard-lisa">
+            <div class="chat-workspace">
+              <section class="chat-panel lisa-chat-panel">
+                <div class="panel-head lisa-chat-head">
+                  <div>
+                    <h2>ASK LISA ( LOAN INSIGHT SMART ANALYST )</h2>
+                  </div>
+                  <span id="mainProviderBadge" class="pill">local_mistral_ollama / gemma2:9b</span>
+                  <label class="chat-customer-picker"><span>Customers list</span><select id="mainChatCustomerSelect"></select></label>
+                </div>
+                <div id="mainBankChatMessages" class="chat-messages lisa-chat-log"><div class="message assistant">Ask for risk, weaknesses, missing documents, overdue debt, or policy comparison.</div></div>
+                <div class="quick-actions">
+                  <button data-quick="Summarize credit risk with citations">Summarize credit risk with citations</button>
+                  <button data-quick="Calculate DTI/LTV policy result">Calculate DTI/LTV policy result</button>
+                  <button data-quick="Review collateral coverage">Review collateral coverage</button>
+                  <button data-quick="List missing documents">List missing documents</button>
+                  <button data-quick="Prepare committee summary">Prepare committee summary</button>
+                  <button data-quick="Draft customer follow-up email">Draft customer follow-up email</button>
+                </div>
+                <div class="voice-row">
+                  <label class="voice-control">Audio
+                    <input id="mainAudioToggle" type="checkbox" checked />
+                  </label>
+                  <label class="voice-control">Voice
+                    <select id="mainVoiceGender">
+                      <option value="male">British male</option>
+                      <option value="female">British female</option>
+                    </select>
+                  </label>
+                  <label class="voice-control">Language
+                    <select id="mainLanguageSelect">
+                      <option value="en-US">English</option>
+                      <option value="vi-VN">Vietnamese</option>
+                      <option value="ja-JP">Japanese</option>
+                      <option value="ko-KR">Korean</option>
+                      <option value="th-TH">Thai</option>
+                      <option value="zh-CN">Chinese</option>
+                    </select>
+                  </label>
+                  <button id="mainVoiceBtn" class="tool-button" type="button">Mic</button>
+                  <button id="mainReadBtn" class="tool-button" type="button">Read answer</button>
+                  <button id="mainTestVoiceBtn" class="tool-button" type="button">Test voice</button>
+                  <span id="mainVoiceStatus" class="muted">Voice and dictation ready when supported by your browser.</span>
+                </div>
+                <form id="mainBankChatForm" class="chat-input-area"><input id="mainBankChatInput" class="chat-input" placeholder="Ask LISA about credit, assets, documents, or policy. Use Mic and say send to submit." /><button class="chat-send" type="submit">Send</button></form>
+              </section>
+              <aside class="case-context-panel">
+                <div class="panel-header"><h2 class="panel-title">Case Context</h2></div>
+                <div class="panel-body">
+                  <div id="chatCaseContext" class="context-stack"></div>
+                  <h3>Audit Trail Preview</h3>
+                  <div id="auditPreview" class="timeline-list"></div>
+                  <h3>AI Answer Metadata</h3>
+                  <div id="aiMetadata" class="metadata-grid"></div>
+                </div>
+              </aside>
+            </div>
+          </section>
+        </section>
+
+        <section id="view-credit" class="view">
+          <div class="appraisal-grid">
+            <div class="case-card"><span>Selected Customer</span><strong id="creditCaseCustomer">--</strong><small id="creditCaseMeta">Borrower profile</small></div>
+            <div class="case-card"><span>Loan Request</span><strong id="creditLoanAmount">$50,000</strong><small id="creditLoanMeta">Term loan | 60 months</small></div>
+            <div class="case-card"><span>Document Evidence</span><strong id="creditRagStatus">--</strong><small>Uploaded / ingested documents</small></div>
+            <div class="case-card"><span>Policy Readiness</span><strong id="creditPolicyStatus">--</strong><small>DTI, LTV, collateral, committee</small></div>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Loan Application Summary</h2><a class="panel-btn" href="credit-appraisal.html">Edit case</a></div>
+              <div id="loanSummaryList" class="panel-body context-stack"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Policy Status</h2><button class="panel-btn" data-view-link="chat">Ask AI</button></div>
+              <div id="policySummaryGrid" class="panel-body policy-grid"></div>
+            </section>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Credit Score Overview</h2><a class="panel-btn" href="credit-appraisal.html">Full Appraisal UI</a></div>
+              <div class="panel-body">
+                <label class="field-label">Customer<select id="creditCustomerSelect"></select></label>
+                <div class="credit-score-display">
+                  <div class="score-ring"><div id="creditScoreValue" class="score-value">--</div><div class="score-label">Heuristic Score</div></div>
+                  <div id="creditRiskBadge" class="score-status">Select customer</div>
+                </div>
+                <div class="action-row">
+                  <button id="generateCreditAssessmentBtn" class="btn btn-primary" type="button">Generate credit assessment</button>
+                  <a class="btn btn-glass" href="credit-appraisal.html">Open appraisal workflow</a>
+                </div>
+                <pre id="creditAssessmentPreview" class="result-box">No credit assessment generated yet.</pre>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Document Evidence Summary</h2><button class="panel-btn" data-view-link="document">Documents</button></div>
+              <div id="recentAssessments" class="panel-body activity-list"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">Credit Appraisal Workflow Checklist</h2>
+              <a class="panel-btn" href="credit-appraisal.html">Open full appraisal</a>
+            </div>
+            <div class="panel-body">
+              <div class="dashboard-grid compact-grid">
+                <div>
+                  <h3>Evidence Checklist</h3>
+                  <div id="appraisalChecklistCredit" class="checklist"></div>
+                </div>
+                <div>
+                  <h3>Credit Officer Prompts</h3>
+                  <div class="prompt-list">
+                    <button data-credit-prompt="Summarize credit risk with citations">Summarize credit risk with citations</button>
+                    <button data-credit-prompt="Calculate DTI/LTV policy result">Calculate DTI/LTV policy result</button>
+                    <button data-credit-prompt="Review collateral coverage">Review collateral coverage</button>
+                    <button data-credit-prompt="List missing documents">List missing documents</button>
+                    <button data-credit-prompt="Prepare committee summary">Prepare committee summary</button>
+                    <button data-credit-prompt="Draft customer follow-up email">Draft customer follow-up email</button>
+                  </div>
+                </div>
+              </div>
+              <div class="guardrail-box">Decision support only. AI must not approve or reject loans. Human credit officer review required.</div>
+            </div>
+          </section>
+        </section>
+
+        <section id="view-committee" class="view">
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Approval Committee Interface</h2><a class="panel-btn" href="credit-appraisal.html">Review appraisal</a></div>
+              <div id="committeePacket" class="panel-body context-stack"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Committee Actions</h2></div>
+              <div class="panel-body">
+                <div class="prompt-list">
+                  <button data-credit-prompt="Prepare committee summary with key risks, mitigants, and missing documents">Prepare committee summary</button>
+                  <button data-credit-prompt="List approval conditions required before final decision">List approval conditions</button>
+                  <button data-credit-prompt="Explain why this case requires or does not require committee review">Explain committee requirement</button>
+                </div>
+                <div class="guardrail-box">Committee output is a review packet. Final approval remains a human authorized decision.</div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="view-decision" class="view">
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Final Decision Interface</h2><button class="panel-btn" data-view-link="committee">Committee packet</button></div>
+              <div id="decisionPanel" class="panel-body context-stack"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Decision Guardrails</h2></div>
+              <div class="panel-body checklist" id="decisionChecklist"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="view-email" class="view">
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Customer Email Draft Interface</h2><button class="panel-btn" data-view-link="decision">Final decision</button></div>
+              <div class="panel-body">
+                <div id="emailDraftPanel" class="context-stack"></div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Email Prompt Actions</h2></div>
+              <div class="panel-body prompt-list">
+                <button data-credit-prompt="Draft a customer follow-up email requesting missing documents">Request missing documents</button>
+                <button data-credit-prompt="Draft a neutral customer email saying the loan request is under human review">Under review email</button>
+                <button data-credit-prompt="Draft a customer email explaining policy conditions without making a final credit decision">Policy conditions email</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="view-asset" class="view">
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Asset Appraisal Per Customer</h2><button id="refreshAssetsBtn" class="panel-btn" type="button">Reload</button></div>
+              <div class="panel-body">
+                <form id="assetForm" class="form-grid">
+                  <label class="field-label">Customer<select id="assetCustomerSelect"></select></label>
+                  <label class="field-label">Asset class<select id="assetClassInput"><option value="real_estate">Real Estate</option><option value="securities">Securities</option><option value="equipment">Equipment</option><option value="inventory">Inventory</option><option value="other">Other</option></select></label>
+                  <label class="field-label">Asset name<input id="assetNameInput" required placeholder="Downtown office, equipment line, shares portfolio" /></label>
+                  <label class="field-label">Appraised value<input id="assetValueInput" required type="number" min="0" step="1000" value="250000" /></label>
+                  <label class="field-label">Haircut %<input id="assetHaircutInput" type="number" min="0" max="100" step="1" value="20" /></label>
+                  <label class="field-label">Confidence<input id="assetConfidenceInput" type="number" min="0" max="100" step="1" value="80" /></label>
+                  <label class="field-label wide">Notes<textarea id="assetNotesInput" rows="3" placeholder="Valuation basis, comparable sales, condition, pledge limits"></textarea></label>
+                  <button class="btn btn-primary" type="submit">Save asset appraisal</button>
+                </form>
+                <p id="assetStatus" class="status-text">Select a customer to load asset appraisals.</p>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-header"><h2 class="panel-title">Asset Valuation Summary</h2><button class="panel-btn" data-view-link="credit">Use in Credit</button></div>
+              <div class="panel-body">
+                <div class="asset-summary-grid">
+                  <div><strong id="assetTotalValue">--</strong><span>Total appraised</span></div>
+                  <div><strong id="assetCollateralValue">--</strong><span>Collateral value</span></div>
+                  <div><strong id="assetCount">--</strong><span>Appraisals</span></div>
+                </div>
+                <div id="assetClassSummary" class="activity-list"></div>
+              </div>
+            </section>
+          </div>
+          <section class="panel">
+            <div class="panel-header"><h2 class="panel-title">Customer Asset Register</h2></div>
+            <div class="panel-body table-wrap"><table><thead><tr><th>ID</th><th>Asset</th><th>Class</th><th>Appraised</th><th>Collateral</th><th>Status</th></tr></thead><tbody id="assetRows"><tr><td colspan="6">No customer selected.</td></tr></tbody></table></div>
+          </section>
+        </section>
+
+        <section id="view-customer" class="view">
+          <div class="dashboard-grid">
+            <section class="panel"><div class="panel-header"><h2 class="panel-title">Customer Overview</h2></div><div class="panel-body"><form id="mainCustomerForm" class="form-grid"><label class="field-label">Name<input id="mainCustomerName" required /></label><label class="field-label">Type<input id="mainCustomerType" value="business" /></label><label class="field-label">Industry<input id="mainCustomerIndustry" /></label><label class="field-label">Country<input id="mainCustomerCountry" /></label><button class="btn btn-primary" type="submit">Add customer</button></form><p id="customerStatus" class="status-text">Ready to add a customer.</p></div></section>
+            <section class="panel"><div class="panel-header"><h2 class="panel-title">Recent Customers</h2></div><div id="customerList" class="panel-body activity-list"></div></section>
+          </div>
+        </section>
+
+        <section id="view-document" class="view">
+          <div class="dashboard-grid">
+            <section class="panel"><div class="panel-header"><h2 class="panel-title">Document Upload Stage</h2><a class="panel-btn" href="credit-appraisal.html">Full appraisal</a></div><div class="panel-body"><form id="documentUploadForm" class="form-grid"><label class="field-label">Customer<select id="documentCustomerSelect"></select></label><label class="field-label">Document type<select id="documentTypeInput"><option value="credit_document">Credit document</option><option value="financial_statement">Financial statement</option><option value="bank_statement">Bank statement</option><option value="collateral_document">Collateral document</option><option value="tax_return">Tax return</option></select></label><label class="field-label wide">Files<input id="documentFileInput" type="file" multiple accept=".pdf,.txt,.csv,.xlsx,.xls,.docx" /></label><label class="field-label checkbox-field"><input id="documentAutoIngest" type="checkbox" checked /> Auto-ingest for appraisal</label><button class="btn btn-primary" type="submit">Upload documents</button></form><p id="documentUploadStatus" class="status-text">Select files to upload and ingest for the selected customer.</p></div></section>
+            <section class="panel"><div class="panel-header"><h2 class="panel-title">Document Analysis Queue</h2></div><div id="documentList" class="panel-body activity-list"></div></section>
+            <section class="panel"><div class="panel-header"><h2 class="panel-title">Analysis Stats</h2></div><div class="panel-body asset-summary-grid"><div><strong id="docTotal">--</strong><span>Total processed</span></div><div><strong id="docIngested">--</strong><span>Ingested</span></div><div><strong id="docPending">--</strong><span>Pending</span></div></div></section>
+          </div>
+        </section>
+
+        <section id="view-reports" class="view">
+          <section class="panel"><div class="panel-header"><h2 class="panel-title">Reports & Analytics</h2><button class="panel-btn">Generate New</button></div><div class="panel-body activity-list"><div class="activity-item"><div class="activity-icon">DO</div><div><strong>Credit Portfolio Snapshot</strong><p>Live customers, documents, scores, and asset collateral summary.</p></div></div><div class="activity-item"><div class="activity-icon">AS</div><div><strong>Asset Valuation Summary</strong><p>Per-customer collateral, haircut, and valuation confidence.</p></div></div></div></section>
+        </section>
+      </main>
+    </div>
+
+    <script src="banking-main.js?v=20260607-main18"></script>
+  </body>
+</html>

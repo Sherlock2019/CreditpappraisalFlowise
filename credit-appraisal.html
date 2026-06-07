@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Credit Appraisal | HyperSpeed Banking AI Copilot</title>
+    <link rel="stylesheet" href="docfactor-ui.css?v=20260607-questions1" />
+  </head>
+  <body data-page="credit">
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">H</span>
+          <div>
+            <strong>HyperSpeed</strong>
+            <small>Credit appraisal</small>
+          </div>
+        </div>
+
+        <nav class="nav-stack">
+          <a class="nav-item" href="index.html">Command Center</a>
+          <a class="nav-item active" href="credit-appraisal.html">Credit Appraisal</a>
+          <a class="nav-item" href="index.html#asset">Asset Appraisal</a>
+          <a class="nav-item" href="http://127.0.0.1:8000/docs" target="_blank" rel="noreferrer">API Swagger</a>
+          <a class="nav-item" href="http://127.0.0.1:3001/canvas/6f946e8b-2d35-4fd4-9ff9-158db1f0b820" target="_blank" rel="noreferrer">Flowise Flow</a>
+        </nav>
+
+        <section class="side-card">
+          <h2>Workflow</h2>
+          <p>1. Create or select a customer.</p>
+          <p>2. Upload and ingest credit documents.</p>
+          <p>3. Ask LISA questions with citations.</p>
+          <p>4. Generate a human-review appraisal.</p>
+        </section>
+
+        <section class="side-card">
+          <h2>Service Mesh</h2>
+          <div class="status-row"><span id="apiStatus" class="dot wait"></span><span>FastAPI backend</span></div>
+          <div class="status-row"><span id="uiStatus" class="dot wait"></span><span>Streamlit UI</span></div>
+          <div class="status-row"><span id="flowiseStatus" class="dot wait"></span><span>Flowise orchestration</span></div>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Credit appraisal workspace</p>
+            <h1>Customer credit review</h1>
+            <p class="muted">RAG retrieval, Flowise orchestration, local LLM provider, and banking guardrails.</p>
+          </div>
+          <div class="top-actions">
+            <button id="themeToggle" class="icon-button" type="button" aria-label="Toggle dark or light theme">Theme</button>
+            <button id="refreshCreditBtn" class="button" type="button">Refresh</button>
+            <a class="button ghost" href="index.html">Main Page</a>
+          </div>
+        </header>
+
+        <section class="credit-grid">
+          <div class="form-stack">
+            <section class="form-panel">
+              <h2>Customer profile</h2>
+              <form id="customerForm" class="form-stack">
+                <label>Name<input id="customerName" required placeholder="Example: ABC Trading Co" /></label>
+                <div class="form-row">
+                  <label>Type<input id="customerType" placeholder="business" value="business" /></label>
+                  <label>Country<input id="customerCountry" placeholder="Vietnam" /></label>
+                </div>
+                <label>Industry<input id="customerIndustry" placeholder="Manufacturing, retail, logistics" /></label>
+                <button class="button hot" type="submit">Create customer</button>
+              </form>
+              <hr />
+              <label>Select customer<select id="customerSelect"></select></label>
+            </section>
+
+            <section class="form-panel">
+              <h2>LLM provider</h2>
+              <div class="form-stack">
+                <label>Provider<select id="providerSelect"></select></label>
+                <label>Local Ollama model<select id="llmModelSelect"></select></label>
+                <div class="form-row">
+                  <label>Temperature<input id="temperatureInput" type="number" min="0" max="1" step="0.05" value="0.2" /></label>
+                  <label>Max tokens<input id="maxTokensInput" type="number" min="256" max="4096" step="128" value="1200" /></label>
+                </div>
+                <p class="muted">Default is local Ollama. OpenAI is not selected unless you choose it.</p>
+              </div>
+            </section>
+
+            <section class="form-panel">
+              <h2>Documents</h2>
+              <div class="form-stack">
+                <label>Data source<select id="sourceSelect"></select></label>
+                <label>Document type<input id="documentType" placeholder="financial_statement" value="financial_statement" /></label>
+                <div id="manualUploadMethod" class="source-method">
+                  <div class="drop-zone">
+                    <div class="upload-picker-row">
+                      <label>Upload files<input id="fileInput" type="file" multiple accept=".pdf,.txt,.csv,.xlsx,.xls,.docx" /></label>
+                      <label>Upload folder<input id="folderInput" type="file" multiple webkitdirectory directory accept=".pdf,.txt,.csv,.xlsx,.xls,.docx" /></label>
+                    </div>
+                    <p class="muted">Folder upload sends supported files from all subfolders.</p>
+                  </div>
+                  <label class="auto-ingest-option">
+                    <input id="autoIngestInput" type="checkbox" checked />
+                    Auto ingest uploaded files
+                  </label>
+                </div>
+                <div id="connectorUploadMethod" class="source-method hidden">
+                  <div class="connector-card">
+                    <h3 id="connectorMethodTitle">Connector import</h3>
+                    <p id="connectorMethodHint" class="muted">Configure this data source, then import listed documents.</p>
+                    <div id="connectorFields" class="connector-fields"></div>
+                    <div class="form-row">
+                      <label>External document ID<input id="connectorExternalId" placeholder="Optional: key, item ID, attachment ID" /></label>
+                      <label>Source URI<input id="connectorSourceUri" placeholder="Optional: s3://bucket/path/file.pdf" /></label>
+                    </div>
+                    <label>Filename override<input id="connectorFilename" placeholder="Optional filename for direct import" /></label>
+                    <div class="row-actions">
+                      <button id="listConnectorDocsBtn" class="button ghost" type="button">List source documents</button>
+                      <button id="clearConnectorDocsBtn" class="button ghost" type="button">Clear listed</button>
+                    </div>
+                    <div id="connectorDocsList" class="connector-doc-list">No source documents listed yet.</div>
+                  </div>
+                </div>
+                <div class="row-actions">
+                  <button id="uploadBtn" class="button hot" type="button">Upload</button>
+                  <button id="ingestSelectedBtn" class="button" type="button">Ingest selected</button>
+                  <button id="testConnectorBtn" class="button ghost" type="button">Test source</button>
+                  <button id="recoverDocsBtn" class="button ghost" type="button">Recover saved</button>
+                </div>
+                <p id="documentStatus" class="muted">Choose a customer before uploading documents.</p>
+                <div id="savedDocsSummary" class="document-summary">No saved documents loaded yet.</div>
+              </div>
+            </section>
+          </div>
+
+          <div class="form-stack">
+            <section class="lisa-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">LISA credit analyst</p>
+                  <h2>Chat with the appraisal backend</h2>
+                </div>
+                <span id="providerBadge" class="pill">local_mistral_ollama</span>
+              </div>
+              <div id="creditChatLog" class="chat-log">
+                <div class="message assistant">Ask for risk, weaknesses, missing documents, overdue debt, or policy comparison.</div>
+              </div>
+              <div class="question-bank">
+                <div class="question-bank-head">
+                  <span>Ready questions</span>
+                  <small>Click to load</small>
+                </div>
+                <div id="creditReadyQuestions" class="question-chip-list"></div>
+              </div>
+              <div class="question-bank">
+                <div class="question-bank-head">
+                  <span>Previous questions</span>
+                  <button id="clearCreditQuestionHistoryBtn" class="link-button" type="button">Clear</button>
+                </div>
+                <div id="creditPreviousQuestions" class="question-chip-list"></div>
+              </div>
+              <div class="voice-row">
+                <label class="voice-control">Audio
+                  <input id="enable_jarvis_voice" type="checkbox" checked />
+                </label>
+                <label class="voice-control">Voice
+                  <select id="jarvis_voice_gender">
+                    <option value="male">British male</option>
+                    <option value="female">British female</option>
+                  </select>
+                </label>
+                <button id="creditVoiceBtn" class="tool-button" type="button">Mic</button>
+                <button id="creditReadBtn" class="tool-button" type="button">Read answer</button>
+                <button id="creditTestVoiceBtn" class="tool-button" type="button">Test voice</button>
+                <span id="creditVoiceStatus" class="muted">British voice ready when supported by your browser.</span>
+              </div>
+              <form id="creditChatForm" class="chat-form">
+                <input id="creditChatInput" autocomplete="off" placeholder="Summarize this customer's credit risk" />
+                <button class="send-button" type="submit">Send</button>
+              </form>
+            </section>
+
+            <section class="output-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Structured output</p>
+                  <h2>Credit assessment</h2>
+                </div>
+                <button id="assessmentBtn" class="button hot" type="button">Generate assessment</button>
+              </div>
+              <div class="pill-row">
+                <span class="pill">Risk: <strong id="riskLevel">--</strong></span>
+                <span class="pill">Score: <strong id="riskScore">--</strong></span>
+                <span class="pill">Flowise: <strong id="flowiseUsed">--</strong></span>
+              </div>
+              <div id="assessmentOutput" class="output-box">No assessment generated yet.</div>
+            </section>
+
+            <section class="output-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Retail bank policy</p>
+                  <h2>Loan Policy Scoring</h2>
+                </div>
+                <button id="loanPolicyBtn" class="button hot" type="button">Calculate Loan Policy Score</button>
+              </div>
+              <div class="form-stack">
+                <div class="form-row">
+                  <label>Loan Amount<input id="loanAmountInput" type="number" min="0" step="1000" value="50000" /></label>
+                  <label>Collateral Value<input id="collateralValueInput" type="number" min="0" step="1000" value="90000" /></label>
+                </div>
+                <div class="form-row">
+                  <label>Monthly Income<input id="monthlyIncomeInput" type="number" min="0" step="100" value="8000" /></label>
+                  <label>Monthly Existing Debt<input id="monthlyDebtInput" type="number" min="0" step="100" value="2200" /></label>
+                </div>
+                <div class="form-row">
+                  <label>Term Months<input id="termMonthsInput" type="number" min="1" step="1" value="60" /></label>
+                  <label>Officer Name<input id="officerNameInput" value="Credit Officer" /></label>
+                </div>
+                <label>Fraud Indicators
+                  <select id="fraudIndicatorsInput" multiple size="4">
+                    <option value="suspicious_invoice_duplication">Suspicious invoice duplication</option>
+                    <option value="related_party_invoices">Related-party invoices</option>
+                    <option value="unexplained_deposits">Unexplained deposits</option>
+                    <option value="valuation_overstatement">Valuation overstatement</option>
+                    <option value="tax_arrears">Tax arrears</option>
+                    <option value="weak_collateral">Weak collateral</option>
+                    <option value="income_mismatch">Income mismatch</option>
+                    <option value="missing_documents">Missing documents</option>
+                  </select>
+                </label>
+                <label>Missing Documents
+                  <select id="missingDocumentsInput" multiple size="4">
+                    <option value="credit_report">Credit report</option>
+                    <option value="financial_statements">Financial statements</option>
+                    <option value="tax_returns">Tax returns</option>
+                    <option value="proof_of_income">Proof of income</option>
+                    <option value="collateral_valuation">Collateral valuation</option>
+                    <option value="business_plan">Business plan</option>
+                    <option value="bank_policy_documents">Bank policy documents</option>
+                  </select>
+                </label>
+              </div>
+              <div id="loanPolicyResult" class="policy-result-grid">
+                <div class="policy-tile"><strong>Repayment Capacity</strong><span>DTI: --</span><small>Run policy scoring.</small></div>
+                <div class="policy-tile"><strong>Collateral Coverage</strong><span>LTV: --</span><small>Collateral is backup protection, not the primary approval reason.</small></div>
+                <div class="policy-tile"><strong>Interest Rate</strong><span>Rate: --</span><small>Base rate plus risk spread.</small></div>
+                <div class="policy-tile"><strong>Recommendation</strong><span>--</span><small>Human credit officer review required.</small></div>
+              </div>
+              <div class="form-stack workflow-box">
+                <div class="row-actions">
+                  <button id="committeeSubmitBtn" class="button" type="button">Submit to Approval Committee</button>
+                  <button id="finalDecisionBtn" class="button" type="button">Record Final Decision</button>
+                  <button id="emailDraftBtn" class="button ghost" type="button">Draft Customer Email</button>
+                </div>
+                <div class="form-row">
+                  <label>Decision
+                    <select id="finalDecisionInput">
+                      <option value="conditional">conditional</option>
+                      <option value="approved">approved</option>
+                      <option value="deferred">deferred</option>
+                      <option value="rejected">rejected</option>
+                    </select>
+                  </label>
+                  <label>Customer Email<input id="customerEmailInput" type="email" placeholder="customer@example.com" /></label>
+                </div>
+                <div class="form-row">
+                  <label>Approved Amount<input id="approvedAmountInput" type="number" min="0" step="1000" value="0" /></label>
+                  <label>Approved Rate %<input id="approvedRateInput" type="number" min="0" step="0.1" value="0" /></label>
+                </div>
+                <label>Conditions<textarea id="decisionConditionsInput" rows="2" placeholder="One condition per line"></textarea></label>
+                <label>Decision Notes<textarea id="decisionNotesInput" rows="2" placeholder="Committee notes, officer rationale, or deferral reason"></textarea></label>
+                <div id="policyWorkflowStatus" class="output-box compact-output">No policy workflow action recorded yet.</div>
+                <div id="emailDraftOutput" class="output-box compact-output">No customer email draft generated yet.</div>
+              </div>
+            </section>
+
+            <section class="table-panel">
+              <div class="panel-head">
+                <h2>Customer documents</h2>
+                <div class="row-actions compact-actions">
+                  <button id="dedupeDocsBtn" class="button ghost" type="button">Remove duplicates</button>
+                  <button id="reloadDocsBtn" class="button ghost" type="button">Reload</button>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th><input id="docsSelectAll" type="checkbox" aria-label="Select all documents" /></th>
+                      <th>ID</th>
+                      <th>Filename</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="documentsBody">
+                    <tr><td colspan="5">No customer selected.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="jarvis_british_speak.js?v=20260606-jarvis1"></script>
+    <script src="docfactor-ui.js?v=20260607-questions1"></script>
+  </body>
+</html>

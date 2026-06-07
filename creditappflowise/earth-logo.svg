@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Rotating earth logo">
+  <defs>
+    <linearGradient id="earthGlow" x1="8" y1="8" x2="56" y2="56">
+      <stop offset="0" stop-color="#7ff6ff"/>
+      <stop offset="0.48" stop-color="#18c9ff"/>
+      <stop offset="1" stop-color="#0a5cff"/>
+    </linearGradient>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="32" cy="32" r="24" fill="rgba(10, 92, 255, 0.12)" stroke="url(#earthGlow)" stroke-width="4" filter="url(#softGlow)"/>
+  <g transform-origin="32 32">
+    <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="4s" repeatCount="indefinite"/>
+    <ellipse cx="32" cy="32" rx="10" ry="24" fill="none" stroke="#8ef7ff" stroke-width="3" opacity="0.9"/>
+    <ellipse cx="32" cy="32" rx="20" ry="8" fill="none" stroke="#ff2bd6" stroke-width="3" opacity="0.76"/>
+    <path d="M10 32h44M32 8v48" stroke="#b9fbff" stroke-width="3" stroke-linecap="round" opacity="0.86"/>
+  </g>
+</svg>
