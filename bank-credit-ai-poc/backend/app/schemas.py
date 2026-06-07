@@ -34,6 +34,34 @@ class DocumentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class IngestionStatus(BaseModel):
+    parser: str = "pending"
+    chunker: str = "pending"
+    embeddings: str = "pending"
+    postgresql: str = "pending"
+    pgvector: str = "pending"
+
+
+class DocumentUploadResponse(DocumentOut):
+    document_id: str
+    session_id: str | None = None
+    ingestion_status: IngestionStatus = Field(default_factory=IngestionStatus)
+
+
+class DocumentStatusResponse(BaseModel):
+    document_id: str
+    customer_id: str
+    parser: str
+    chunker: str
+    embeddings: str
+    postgresql: str
+    pgvector: str
+    chunks_count: int = 0
+    embedding_model: str = "local-hash-embedding"
+    indexed_at: datetime | None = None
+    error: str | None = None
+
+
 class IngestResponse(BaseModel):
     document_id: int
     status: str
@@ -206,7 +234,7 @@ class ConnectorIngestResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = Field(default="ok")
-    service: str = "docfactor-api"
+    service: str = "docfactor-banking-api"
     flowise_configured: bool = False
     flowise_base_url: str | None = None
 
@@ -245,11 +273,16 @@ class FraudResult(BaseModel):
 
 class LoanPolicyRequest(BaseModel):
     customer_id: str
-    loan_amount: float
-    collateral_value: float
-    monthly_income: float
-    monthly_debt_payments: float
-    term_months: int = 60
+    session_id: str | None = None
+    policy_mode: str = "standard_credit_policy"
+    loan_amount: float | None = 0
+    collateral_value: float | None = 0
+    monthly_income: float | None = 0
+    monthly_debt_payments: float | None = None
+    monthly_debt: float | None = None
+    annual_interest_rate: float | None = None
+    term_months: int | None = 60
+    evidence: list[dict] = Field(default_factory=list)
     fraud_indicators: list[str] = Field(default_factory=list)
     missing_documents: list[str] = Field(default_factory=list)
     assessment_id: str | None = None
@@ -258,6 +291,7 @@ class LoanPolicyRequest(BaseModel):
 class LoanPolicyResponse(BaseModel):
     policy_score_id: int | None = None
     customer_id: str
+    policy_mode: str = "standard_credit_policy"
     assessment_id: str | None = None
     dti: DTIResult
     ltv: LTVResult
@@ -266,6 +300,15 @@ class LoanPolicyResponse(BaseModel):
     fraud: FraudResult
     missing_documents: list[str] = Field(default_factory=list)
     next_steps: list[str] = Field(default_factory=list)
+    dti_ratio: float | None = None
+    ltv_ratio: float | None = None
+    interest_rate: float | None = None
+    monthly_payment: float | None = None
+    policy_breaches: list[str] = Field(default_factory=list)
+    risk_level: str = "medium"
+    recommendation: str = "review"
+    human_review_required: bool = True
+    explanation: list[str] = Field(default_factory=list)
 
 
 class ApprovalCommitteeSubmitRequest(BaseModel):
@@ -285,12 +328,14 @@ class ApprovalCommitteeSubmitResponse(BaseModel):
 class FinalDecisionRequest(BaseModel):
     committee_case_id: str | None = None
     customer_id: str
-    decision: Literal["approved", "rejected", "conditional", "deferred"]
+    decision: Literal["approved", "rejected", "conditional", "deferred", "request_more_info"]
     approved_amount: float = 0
     approved_rate_pct: float = 0
     conditions: list[str] = Field(default_factory=list)
-    decision_by: str
+    decision_by: str | None = None
+    decided_by: str | None = None
     decision_notes: str | None = None
+    notes: str | None = None
 
 
 class FinalDecisionResponse(BaseModel):
@@ -301,14 +346,15 @@ class FinalDecisionResponse(BaseModel):
 
 class CustomerDecisionEmailDraftRequest(BaseModel):
     customer_id: str
-    customer_email: str
-    decision: Literal["approved", "rejected", "conditional", "deferred"]
+    customer_email: str = "customer@example.com"
+    decision: Literal["approved", "rejected", "conditional", "deferred", "request_more_info"] = "conditional"
     approved_amount: float = 0
     approved_rate_pct: float = 0
     conditions: list[str] = Field(default_factory=list)
     reason_summary: str | None = None
-    officer_name: str
+    officer_name: str = "Credit Officer"
     decision_id: str | None = None
+    language: str = "en"
 
 
 class CustomerDecisionEmailDraftResponse(BaseModel):

@@ -49,6 +49,7 @@ def retrieve_relevant_chunks(db: Session, customer_id: int, question: str, top_k
     query = text(
         """
         SELECT
+          d.id AS document_id,
           c.chunk_text,
           COALESCE(c.metadata->>'filename', d.filename) AS filename,
           COALESCE(c.metadata->>'document_type', d.document_type) AS document_type,
@@ -73,6 +74,7 @@ def retrieve_relevant_chunks_all_customers(db: Session, question: str, top_k: in
     query = text(
         """
         SELECT
+          d.id AS document_id,
           c.customer_id,
           c.chunk_text,
           COALESCE(c.metadata->>'filename', d.filename) AS filename,

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.audit import log_event
 from app.database import get_db
+from app.flowise_compat import ensure_customer
 from app.policy.loan_policy import score_loan_policy
 
 router = APIRouter(tags=["loan policy"])
@@ -47,7 +48,12 @@ def calculate_policy_score(
     payload: schemas.LoanPolicyRequest,
     db: Session = Depends(get_db),
 ) -> schemas.LoanPolicyResponse:
-    result = score_loan_policy(payload.model_dump())
+    customer = ensure_customer(db, payload.customer_id)
+    normalized_payload = payload.model_dump()
+    if normalized_payload.get("monthly_debt_payments") is None:
+        normalized_payload["monthly_debt_payments"] = normalized_payload.get("monthly_debt") or 0
+    normalized_payload["customer_id"] = str(payload.customer_id)
+    result = score_loan_policy(normalized_payload)
     record = models.LoanPolicyScore(
         customer_id=result["customer_id"],
         assessment_id=result.get("assessment_id"),
@@ -68,11 +74,46 @@ def calculate_policy_score(
     db.commit()
     db.refresh(record)
     result["policy_score_id"] = record.id
+    result["policy_mode"] = payload.policy_mode
+    dti_pct = result["dti"]["value_pct"]
+    ltv_pct = result["ltv"]["value_pct"]
+    flat_dti = round(dti_pct / 100, 6) if dti_pct is not None else None
+    flat_ltv = round(ltv_pct / 100, 6) if ltv_pct is not None else None
+    policy_breaches = list(result["policy"].get("reason_codes") or [])
+    if dti_pct is None or ltv_pct is None:
+        risk_level = "high"
+        recommendation = "request_more_info"
+    elif dti_pct <= 35 and ltv_pct <= 70 and not policy_breaches:
+        risk_level = "low"
+        recommendation = "approve_candidate"
+    elif dti_pct > 45 or ltv_pct > 85:
+        risk_level = "high"
+        recommendation = "review"
+    else:
+        risk_level = "medium"
+        recommendation = "review"
+    result.update(
+        {
+            "dti_ratio": flat_dti,
+            "ltv_ratio": flat_ltv,
+            "interest_rate": round((result["interest"]["estimated_annual_rate_pct"] or 0) / 100, 6),
+            "monthly_payment": result["interest"]["estimated_monthly_payment"],
+            "policy_breaches": policy_breaches,
+            "risk_level": risk_level,
+            "recommendation": recommendation,
+            "human_review_required": True,
+            "explanation": [
+                result["dti"]["assessment"],
+                result["ltv"]["assessment"],
+                "Human credit officer review required.",
+            ],
+        }
+    )
     log_event(
         db,
         "loan_policy_scored",
-        _audit_customer_id(result["customer_id"]),
-        {"policy_score_id": record.id, "recommendation": record.recommendation},
+        customer.id,
+        {"policy_score_id": record.id, "recommendation": record.recommendation, "flowise_customer_id": payload.customer_id},
     )
     return schemas.LoanPolicyResponse(**result)
 
@@ -82,6 +123,7 @@ def submit_to_approval_committee(
     payload: schemas.ApprovalCommitteeSubmitRequest,
     db: Session = Depends(get_db),
 ) -> schemas.ApprovalCommitteeSubmitResponse:
+    ensure_customer(db, payload.customer_id)
     policy_score_id = payload.policy_score.get("policy_score_id") or payload.policy_score.get("id")
     case = models.ApprovalCommitteeCase(
         customer_id=payload.customer_id,
@@ -109,29 +151,29 @@ def record_final_decision(
     payload: schemas.FinalDecisionRequest,
     db: Session = Depends(get_db),
 ) -> schemas.FinalDecisionResponse:
+    decision_by = payload.decision_by or payload.decided_by
+    if not decision_by:
+        raise HTTPException(status_code=400, detail="decided_by or decision_by is required. LLM-only final decisions are not allowed.")
     case_id = _parse_prefixed_id(payload.committee_case_id, "COM")
-    if case_id is None:
-        raise HTTPException(
-            status_code=400,
-            detail="committee_case_id is required before final decision for review, high-risk, or committee workflow cases.",
-        )
-
-    case = db.query(models.ApprovalCommitteeCase).filter(models.ApprovalCommitteeCase.id == case_id).first()
-    if not case:
-        raise HTTPException(status_code=404, detail="Approval committee case not found")
+    case = None
+    if case_id is not None:
+        case = db.query(models.ApprovalCommitteeCase).filter(models.ApprovalCommitteeCase.id == case_id).first()
+        if not case:
+            raise HTTPException(status_code=404, detail="Approval committee case not found")
 
     decision = models.FinalDecision(
-        committee_case_id=_case_id(case.id),
+        committee_case_id=_case_id(case.id) if case else None,
         customer_id=payload.customer_id,
         decision=payload.decision,
         approved_amount=payload.approved_amount,
         approved_rate_pct=payload.approved_rate_pct,
         conditions=payload.conditions,
-        decision_by=payload.decision_by,
-        decision_notes=payload.decision_notes,
+        decision_by=decision_by,
+        decision_notes=payload.decision_notes or payload.notes,
     )
     db.add(decision)
-    case.status = "final_decision_recorded"
+    if case:
+        case.status = "final_decision_recorded"
     db.commit()
     db.refresh(decision)
     final_decision_id = _decision_id(decision.id)
@@ -139,7 +181,7 @@ def record_final_decision(
         db,
         "final_decision_recorded",
         _audit_customer_id(payload.customer_id),
-        {"decision_id": final_decision_id, "committee_case_id": payload.committee_case_id, "decision": payload.decision},
+        {"decision_id": final_decision_id, "committee_case_id": payload.committee_case_id, "decision": payload.decision, "human_decision_by": decision_by},
     )
     return schemas.FinalDecisionResponse(decision_id=final_decision_id)
 

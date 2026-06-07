@@ -1,10 +1,11 @@
 from collections import defaultdict
+import re
 import shutil
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -15,11 +16,13 @@ from app.document_cache import document_memory_cache
 from app.document_recovery import recover_uploaded_files_from_disk
 from app.document_parser import chunk_sections, parse_document
 from app.embeddings import create_embedding
+from app.flowise_compat import ensure_customer, external_document_id, parse_external_document_id
 
 router = APIRouter(tags=["documents"])
 
-SUPPORTED_SUFFIXES = {".pdf", ".txt", ".csv", ".xlsx", ".xls", ".docx"}
+SUPPORTED_SUFFIXES = {".pdf", ".txt", ".csv", ".xlsx", ".xls", ".docx", ".png", ".jpg", ".jpeg"}
 DOCUMENT_STATUS_RANK = {"ingested": 3, "uploaded": 2, "processing": 1, "error": 0}
+GENERIC_CUSTOMER_NAMES = {"", "abc", "abc trading co", "example: abc trading co"}
 
 
 def _safe_filename(filename: str) -> str:
@@ -27,6 +30,84 @@ def _safe_filename(filename: str) -> str:
     parts = [part for part in raw_filename.split("/") if part not in {"", ".", ".."}]
     flat_filename = "__".join(parts) or "uploaded_file"
     return "".join("_" if char in '<>:"|?*' else char for char in flat_filename)
+
+
+def _synthetic_customer_id(filename: str) -> int | None:
+    match = re.search(r"\bCUST-(\d{3,})\b", filename or "", flags=re.IGNORECASE)
+    return int(match.group(1)) if match else None
+
+
+def _sync_customer_sequence(db: Session) -> None:
+    bind = db.get_bind()
+    if bind.dialect.name != "postgresql":
+        return
+    db.execute(
+        text(
+            """
+            select setval(
+                pg_get_serial_sequence('customers', 'id'),
+                greatest(coalesce((select max(id) from customers), 1), 1),
+                true
+            )
+            """
+        )
+    )
+
+
+def _ensure_upload_customer(db: Session, requested_customer_id: str, filename: str) -> models.Customer:
+    synthetic_id = _synthetic_customer_id(filename)
+    if synthetic_id is not None:
+        customer = db.query(models.Customer).filter(models.Customer.id == synthetic_id).first()
+        if not customer:
+            customer = models.Customer(
+                id=synthetic_id,
+                name=f"CUST-{synthetic_id:03d}",
+                customer_type="business",
+                industry="Credit appraisal",
+                country=None,
+            )
+            db.add(customer)
+            db.commit()
+            _sync_customer_sequence(db)
+            db.commit()
+            db.refresh(customer)
+        return customer
+    return ensure_customer(db, requested_customer_id)
+
+
+def _candidate_customer_name(text_value: str) -> str | None:
+    compact = " ".join((text_value or "").split())
+    patterns = [
+        r"(?:Taxpayer\s*/\s*Entity|Borrower|Customer|Entity|Applicant)\s+(.+?)(?:\s+Tax Year|\s+Industry|\s+Business Type|\s+Country|\s+Loan|\s+Revenue|\s+Field Value|$)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, compact, flags=re.IGNORECASE)
+        if not match:
+            continue
+        name = match.group(1).strip(" :-|")
+        if 2 <= len(name) <= 80 and not re.search(r"\b(CUST-\d+|Field|Value)\b", name, flags=re.IGNORECASE):
+            return name
+    return None
+
+
+def _maybe_update_customer_name_from_chunks(db: Session, customer_id: int, chunks: list[dict[str, Any]]) -> None:
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
+    if not customer:
+        return
+    current_name = (customer.name or "").strip()
+    should_update = (
+        current_name.casefold() in GENERIC_CUSTOMER_NAMES
+        or current_name.casefold().startswith("cust-")
+        or current_name.casefold().startswith("recovered customer")
+    )
+    if not should_update:
+        return
+    for chunk in chunks:
+        candidate = _candidate_customer_name(chunk.get("text") or "")
+        if candidate:
+            customer.name = candidate
+            db.add(customer)
+            return
 
 
 def _dedupe_rank(document: models.Document) -> tuple[int, int]:
@@ -117,6 +198,8 @@ def ingest_document_record(db: Session, document: models.Document) -> int:
     if not chunks:
         raise ValueError("No text content could be extracted")
 
+    _maybe_update_customer_name_from_chunks(db, document.customer_id, chunks)
+
     db.query(models.DocumentChunk).filter(models.DocumentChunk.document_id == document.id).delete()
     for index, chunk in enumerate(chunks):
         embedding = create_embedding(chunk["text"])
@@ -142,24 +225,47 @@ def ingest_document_record(db: Session, document: models.Document) -> int:
     return len(chunks)
 
 
-@router.post("/documents/upload", response_model=schemas.DocumentOut)
+def _ingestion_status(document: models.Document, chunks_count: int = 0) -> schemas.IngestionStatus:
+    if document.status == "ingested":
+        return schemas.IngestionStatus(parser="done", chunker="done", embeddings="done", postgresql="done", pgvector="done")
+    if document.status == "error":
+        return schemas.IngestionStatus(parser="failed", chunker="failed", embeddings="failed", postgresql="failed", pgvector="failed")
+    if chunks_count:
+        return schemas.IngestionStatus(parser="done", chunker="done", embeddings="done", postgresql="done", pgvector="done")
+    return schemas.IngestionStatus(parser="pending", chunker="pending", embeddings="pending", postgresql="pending", pgvector="pending")
+
+
+def _upload_response(document: models.Document, session_id: str | None = None, chunks_count: int = 0) -> schemas.DocumentUploadResponse:
+    payload = schemas.DocumentOut.model_validate(document).model_dump()
+    return schemas.DocumentUploadResponse(
+        **payload,
+        document_id=external_document_id(document.id),
+        session_id=session_id,
+        ingestion_status=_ingestion_status(document, chunks_count),
+    )
+
+
+@router.post("/documents/upload", response_model=schemas.DocumentUploadResponse)
 def upload_document(
-    customer_id: int = Form(...),
-    document_type: str = Form(...),
+    customer_id: str = Form(...),
+    session_id: str | None = Form(None),
+    source: str = Form("manual_upload"),
+    document_type: str = Form("credit_document"),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-) -> schemas.DocumentOut:
-    customer = crud.get_customer(db, customer_id)
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-
+) -> schemas.DocumentUploadResponse:
     filename = _safe_filename(file.filename or "uploaded_file")
+    try:
+        customer = _ensure_upload_customer(db, customer_id, filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     suffix = Path(filename).suffix.lower()
     if suffix not in SUPPORTED_SUFFIXES:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {suffix}")
 
     settings = get_settings()
-    customer_dir = Path(settings.upload_dir) / str(customer_id)
+    customer_dir = Path(settings.upload_dir) / str(customer.id)
     customer_dir.mkdir(parents=True, exist_ok=True)
     file_path = customer_dir / filename
 
@@ -169,7 +275,7 @@ def upload_document(
     existing_document = (
         db.query(models.Document)
         .filter(
-            models.Document.customer_id == customer_id,
+            models.Document.customer_id == customer.id,
             models.Document.filename == filename,
             models.Document.document_type == document_type,
         )
@@ -180,30 +286,55 @@ def upload_document(
         db.query(models.DocumentChunk).filter(models.DocumentChunk.document_id == existing_document.id).delete()
         existing_document.file_path = str(file_path)
         existing_document.status = "uploaded"
-        existing_document.source_type = "manual_upload"
+        existing_document.source_type = source or "manual_upload"
         existing_document.source_uri = None
         existing_document.external_document_id = None
-        existing_document.source_metadata = {}
+        existing_document.source_metadata = {"session_id": session_id} if session_id else {}
         db.commit()
         db.refresh(existing_document)
-        log_event(db, "document_reuploaded", customer_id, {"document_id": existing_document.id, "filename": filename})
+        log_event(db, "document_reuploaded", customer.id, {"document_id": existing_document.id, "filename": filename, "source": source})
         document_memory_cache.upsert_document(db, existing_document.id)
-        return existing_document
+        return _upload_response(existing_document, session_id=session_id)
 
     document = models.Document(
-        customer_id=customer_id,
+        customer_id=customer.id,
         filename=filename,
         file_path=str(file_path),
         document_type=document_type,
         status="uploaded",
-        source_type="manual_upload",
+        source_type=source or "manual_upload",
+        source_metadata={"session_id": session_id} if session_id else {},
     )
     db.add(document)
     db.commit()
     db.refresh(document)
-    log_event(db, "document_uploaded", customer_id, {"document_id": document.id, "filename": filename})
+    log_event(db, "document_uploaded", customer.id, {"document_id": document.id, "filename": filename, "source": source})
     document_memory_cache.upsert_document(db, document.id)
-    return document
+    return _upload_response(document, session_id=session_id)
+
+
+@router.get("/documents/{document_id}/status", response_model=schemas.DocumentStatusResponse)
+def document_status(document_id: str, db: Session = Depends(get_db)) -> schemas.DocumentStatusResponse:
+    internal_id = parse_external_document_id(document_id)
+    if internal_id is None:
+        raise HTTPException(status_code=400, detail="Invalid document_id")
+    document = crud.get_document(db, internal_id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    chunks_count = db.query(models.DocumentChunk).filter(models.DocumentChunk.document_id == document.id).count()
+    status = _ingestion_status(document, chunks_count)
+    return schemas.DocumentStatusResponse(
+        document_id=external_document_id(document.id),
+        customer_id=str(document.customer_id),
+        parser=status.parser,
+        chunker=status.chunker,
+        embeddings=status.embeddings,
+        postgresql=status.postgresql,
+        pgvector=status.pgvector,
+        chunks_count=chunks_count,
+        indexed_at=document.uploaded_at if document.status == "ingested" else None,
+        error="Document ingestion failed" if document.status == "error" else None,
+    )
 
 
 @router.post("/ingest/{document_id}", response_model=schemas.IngestResponse)

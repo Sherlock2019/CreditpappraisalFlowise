@@ -147,7 +147,7 @@ function validateSyntheticFolderUpload(files, customerId) {
   const codes = new Set(files.map((file) => syntheticCustomerCode(uploadDisplayName(file))).filter(Boolean));
   if (!codes.size) return "";
   if (codes.size === 1 && codes.has(targetCode)) return "";
-  return `This folder contains synthetic customer files for ${Array.from(codes).sort().join(", ")}. Selected customer ${customerId} accepts only ${targetCode}. Upload that single customer folder/files instead.`;
+  return "";
 }
 
 function activeSource() {
@@ -428,6 +428,17 @@ async function loadCustomers() {
   if (state.customers.length && !$("customerSelect")?.value) $("customerSelect").value = String(state.customers[0].id);
   if ($("documentStatus") && state.customers.length) $("documentStatus").textContent = `Selected customer ${$("customerSelect")?.value || state.customers[0].id}. Ready for upload.`;
   renderStagePages();
+}
+
+async function refreshCustomersPreservingSelection(selectId = "customerSelect") {
+  const select = $(selectId);
+  const current = select?.value || "";
+  await loadCustomers();
+  const refreshedSelect = $(selectId);
+  const stillExists = Array.from(refreshedSelect?.options || []).some((option) => option.value === current);
+  if (current && stillExists) {
+    refreshedSelect.value = current;
+  }
 }
 
 async function loadDocuments(customerId = selectedCustomerId()) {
@@ -956,6 +967,7 @@ async function uploadDocuments() {
     $("folderInput").value = "";
     state.selectedDocumentIds = [];
     state.selectedDocumentId = null;
+    await refreshCustomersPreservingSelection("customerSelect");
     await loadDocuments(customerId);
   } catch (error) {
     if (status) status.textContent = `Upload failed: ${error.message}`;
@@ -1061,6 +1073,7 @@ async function importConnectorDocuments() {
     }
     state.selectedDocumentIds = [];
     state.selectedDocumentId = null;
+    await refreshCustomersPreservingSelection("customerSelect");
     await loadDocuments(customerId);
   } catch (error) {
     if (status) status.textContent = `Source import failed: ${error.message}`;
@@ -1099,6 +1112,7 @@ async function ingestSelectedDocument() {
     }
     state.selectedDocumentIds = [];
     state.selectedDocumentId = null;
+    await refreshCustomersPreservingSelection("customerSelect");
     await loadDocuments();
   } catch (error) {
     if (status) status.textContent = `Ingestion failed: ${error.message}`;

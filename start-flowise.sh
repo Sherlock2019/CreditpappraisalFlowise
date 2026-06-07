@@ -4,6 +4,7 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 POC_DIR="${POC_DIR:-${APP_DIR}/bank-credit-ai-poc}"
 FLOWISE_PORT="${FLOWISE_PORT:-3001}"
+RESTART_FLOWISE="${RESTART_FLOWISE:-0}"
 FLOWISE_NPX_PACKAGE="${FLOWISE_NPX_PACKAGE:-flowise@3.1.2}"
 FLOWISE_HOME="${FLOWISE_HOME:-${POC_DIR}/flowise/.flowise}"
 FLOWISE_VERSION="${FLOWISE_VERSION:-3.1.2}"
@@ -26,7 +27,19 @@ if [[ -f "${POC_DIR}/.env" ]]; then
   set +a
 fi
 
-if curl --max-time 2 -fsS "http://127.0.0.1:${FLOWISE_PORT}" >/dev/null 2>&1; then
+if [[ "$RESTART_FLOWISE" == "1" ]]; then
+  if [[ -f "${POC_DIR}/logs/flowise.pid" ]]; then
+    FLOWISE_OLD_PID="$(cat "${POC_DIR}/logs/flowise.pid" 2>/dev/null || true)"
+    if [[ -n "$FLOWISE_OLD_PID" ]] && kill -0 "$FLOWISE_OLD_PID" 2>/dev/null; then
+      echo "Stopping existing Flowise process ${FLOWISE_OLD_PID}..."
+      kill "$FLOWISE_OLD_PID" 2>/dev/null || true
+    fi
+  fi
+  pkill -f "${LOCAL_FLOWISE_BIN} start" 2>/dev/null || true
+  sleep 2
+fi
+
+if [[ "$RESTART_FLOWISE" != "1" ]] && curl --max-time 2 -fsS "http://127.0.0.1:${FLOWISE_PORT}" >/dev/null 2>&1; then
   echo "Flowise is already reachable at http://127.0.0.1:${FLOWISE_PORT}"
   exit 0
 fi

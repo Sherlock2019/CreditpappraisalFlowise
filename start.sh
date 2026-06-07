@@ -10,6 +10,7 @@ START_STACK="${START_STACK:-1}"
 OPEN_BROWSER="${OPEN_BROWSER:-0}"
 START_DOCKER_FLOWISE="${START_DOCKER_FLOWISE:-0}"
 START_LOCAL_FLOWISE="${START_LOCAL_FLOWISE:-1}"
+RESTART_LOCAL_FLOWISE="${RESTART_LOCAL_FLOWISE:-0}"
 START_DOCKER_DAEMON="${START_DOCKER_DAEMON:-1}"
 START_OLLAMA="${START_OLLAMA:-1}"
 OLLAMA_HOST="${OLLAMA_HOST:-0.0.0.0:11434}"
@@ -211,7 +212,12 @@ fi
 FLOWISE_PORT="${FLOWISE_PORT:-3001}"
 
 if [[ "$START_LOCAL_FLOWISE" == "1" ]]; then
-  if ! curl --max-time 2 -fsS "http://127.0.0.1:${FLOWISE_PORT}" >/dev/null 2>&1; then
+  if [[ "$RESTART_LOCAL_FLOWISE" == "1" ]]; then
+    echo "Restarting local Flowise 3.1.2..."
+    if ! FLOWISE_PORT="$FLOWISE_PORT" RESTART_FLOWISE=1 "${APP_DIR}/start-flowise.sh"; then
+      echo "Warning: local Flowise did not restart. See ${POC_DIR}/logs/flowise.log"
+    fi
+  elif ! curl --max-time 2 -fsS "http://127.0.0.1:${FLOWISE_PORT}" >/dev/null 2>&1; then
     echo "Starting local Flowise 3.1.2..."
     if ! FLOWISE_PORT="$FLOWISE_PORT" "${APP_DIR}/start-flowise.sh"; then
       echo "Warning: local Flowise did not start. See ${POC_DIR}/logs/flowise.log"
