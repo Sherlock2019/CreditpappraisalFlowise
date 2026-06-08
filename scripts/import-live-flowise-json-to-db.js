@@ -51,41 +51,52 @@ fs.copyFileSync(dbPath, backupPath);
 
 const db = new sqlite3.Database(dbPath);
 db.serialize(() => {
-  db.get("select id, name from chat_flow where id = ?", [FLOW_ID], (selectError, row) => {
-    if (selectError) {
-      console.error(selectError);
+  db.get("select id from workspace order by createdDate asc limit 1", (workspaceError, workspace) => {
+    if (workspaceError) {
+      console.error(workspaceError);
       process.exitCode = 1;
       db.close();
       return;
     }
-    const now = timestamp();
-    const sql = row
-      ? "update chat_flow set name = ?, flowData = ?, deployed = ?, isPublic = ?, chatbotConfig = ?, apiConfig = ?, category = ?, type = ?, updatedDate = ? where id = ?"
-      : "insert into chat_flow (name, flowData, deployed, isPublic, chatbotConfig, apiConfig, category, type, createdDate, updatedDate, id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    const params = row
-      ? [flowName, JSON.stringify(flowData), deployed, isPublic, chatbotConfig, apiConfig, category, type, now, FLOW_ID]
-      : [flowName, JSON.stringify(flowData), deployed, isPublic, chatbotConfig, apiConfig, category, type, now, now, FLOW_ID];
 
-    db.run(
-      sql,
-      params,
-      function updateFlow(updateError) {
-        if (updateError) {
-          console.error(updateError);
-          process.exitCode = 1;
-        } else {
-          console.log(JSON.stringify({
-            flow_id: FLOW_ID,
-            name: flowName,
-            operation: row ? "updated" : "inserted",
-            changed_rows: this.changes,
-            nodes: flowData.nodes.length,
-            edges: flowData.edges.length,
-            backup: backupPath,
-          }, null, 2));
-        }
+    const workspaceId = workspace?.id || null;
+    db.get("select id, name from chat_flow where id = ?", [FLOW_ID], (selectError, row) => {
+      if (selectError) {
+        console.error(selectError);
+        process.exitCode = 1;
         db.close();
+        return;
       }
-    );
+      const now = timestamp();
+      const sql = row
+        ? "update chat_flow set name = ?, flowData = ?, deployed = ?, isPublic = ?, chatbotConfig = ?, apiConfig = ?, category = ?, type = ?, workspaceId = ?, updatedDate = ? where id = ?"
+        : "insert into chat_flow (name, flowData, deployed, isPublic, chatbotConfig, apiConfig, category, type, workspaceId, createdDate, updatedDate, id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+      const params = row
+        ? [flowName, JSON.stringify(flowData), deployed, isPublic, chatbotConfig, apiConfig, category, type, workspaceId, now, FLOW_ID]
+        : [flowName, JSON.stringify(flowData), deployed, isPublic, chatbotConfig, apiConfig, category, type, workspaceId, now, now, FLOW_ID];
+
+      db.run(
+        sql,
+        params,
+        function updateFlow(updateError) {
+          if (updateError) {
+            console.error(updateError);
+            process.exitCode = 1;
+          } else {
+            console.log(JSON.stringify({
+              flow_id: FLOW_ID,
+              name: flowName,
+              operation: row ? "updated" : "inserted",
+              changed_rows: this.changes,
+              nodes: flowData.nodes.length,
+              edges: flowData.edges.length,
+              workspace_id: workspaceId,
+              backup: backupPath,
+            }, null, 2));
+          }
+          db.close();
+        }
+      );
+    });
   });
 });
