@@ -299,7 +299,6 @@ textarea {
   display: block;
   font-size: clamp(28px, 3vw, 42px);
   font-weight: 950;
-  text-transform: uppercase;
   background: linear-gradient(90deg, #ff2bd6, #7c3cff, #12dff3);
   -webkit-background-clip: text;
   background-clip: text;
