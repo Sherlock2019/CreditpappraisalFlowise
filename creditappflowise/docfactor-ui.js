@@ -482,8 +482,10 @@ async function loadCustomers() {
     if (current && state.customers.some((c) => String(c.id) === current)) select.value = current;
   }
   if ($("metricCustomers")) $("metricCustomers").textContent = String(state.customers.length);
-  if (state.customers.length && !$("mainCustomerSelect")?.value) $("mainCustomerSelect").value = String(state.customers[0].id);
-  if (state.customers.length && !$("customerSelect")?.value) $("customerSelect").value = String(state.customers[0].id);
+  const mainCustomerSelect = $("mainCustomerSelect");
+  const customerSelect = $("customerSelect");
+  if (state.customers.length && mainCustomerSelect && !mainCustomerSelect.value) mainCustomerSelect.value = String(state.customers[0].id);
+  if (state.customers.length && customerSelect && !customerSelect.value) customerSelect.value = String(state.customers[0].id);
   if ($("documentStatus") && state.customers.length) $("documentStatus").textContent = `Selected customer ${$("customerSelect")?.value || state.customers[0].id}. Ready for upload.`;
   renderStagePages();
 }
