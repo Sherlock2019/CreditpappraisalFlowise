@@ -1,0 +1,22 @@
+{
+  "dataset_name": "DocFactor Banking Credit Appraisal Demo Dataset",
+  "customer_count": 15,
+  "risk_distribution": {
+    "Good": 4,
+    "Medium": 5,
+    "High": 6
+  },
+  "documents_per_customer": [
+    "loan_application.docx",
+    "income_statement.pdf",
+    "tax_return_summary.pdf",
+    "collateral_valuation.docx",
+    "bank_statement_6_months.csv",
+    "financials.csv"
+  ],
+  "recommended_ingestion_order": [
+    "DocFactor_Banking_Demo_Master_Dataset.xlsx",
+    "customer_documents/*/*"
+  ],
+  "policy": "Decision support only. Do not approve or reject loans automatically. Human credit officer review required."
+}

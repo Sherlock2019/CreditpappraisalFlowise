@@ -27,6 +27,7 @@ FLOWISE_NPX_PACKAGE="${FLOWISE_NPX_PACKAGE:-flowise@3.1.2}"
 FLOWISE_COMMAND="${FLOWISE_COMMAND:-}"
 START_LAUNCHER="${START_LAUNCHER:-1}"
 OPEN_BROWSER="${OPEN_BROWSER:-0}"
+PRELOAD_DEMO_DATASET="${PRELOAD_DEMO_DATASET:-1}"
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
@@ -109,6 +110,7 @@ BACKEND_URL=http://localhost:${BACKEND_PORT}
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=mistral:7b-instruct
 UPLOAD_DIR=${POC_DIR}/data/uploads
+DEMO_CUSTOMER_DOCUMENTS_DIR=${APP_DIR}/docfactor_banking_demo_dataset/customer_documents
 EOF
 }
 
@@ -213,6 +215,25 @@ wait_for_url() {
   log "Warning: ${name} did not answer at ${url} yet."
 }
 
+preload_demo_dataset() {
+  if [[ "$PRELOAD_DEMO_DATASET" != "1" ]]; then
+    log "Skipping demo customer document preload. PRELOAD_DEMO_DATASET=${PRELOAD_DEMO_DATASET}"
+    return 0
+  fi
+
+  if [[ ! -d "${APP_DIR}/docfactor_banking_demo_dataset/customer_documents" ]]; then
+    log "Demo customer document dataset not found; skipping preload."
+    return 0
+  fi
+
+  log "Preloading demo customer documents into FastAPI."
+  if curl --max-time 120 -fsS -X POST "http://localhost:${BACKEND_PORT}/documents/preload-demo-dataset" >/dev/null; then
+    log "Demo customer document preload complete."
+  else
+    log "Warning: demo customer document preload failed. Check ${POC_DIR}/logs/backend.log"
+  fi
+}
+
 need_command "$PYTHON_BIN" "Install Python 3."
 need_command curl "Install curl."
 
@@ -230,6 +251,7 @@ start_frontend
 start_launcher
 
 wait_for_url "http://localhost:${BACKEND_PORT}/health" "FastAPI backend" 45
+preload_demo_dataset
 wait_for_url "http://localhost:${FRONTEND_PORT}" "Streamlit frontend" 45
 
 cat <<EOF

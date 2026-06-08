@@ -35,6 +35,12 @@ cd /home/dzoan/docfactorFlowise
 
 The install happens inside a local `.venv/` and is skipped on later starts until either requirements file changes.
 
+On startup, the launcher also preloads the demo customer document dataset from:
+
+`docfactor_banking_demo_dataset/customer_documents`
+
+This registers the `CUST-001` through `CUST-015` files in FastAPI so the customer dropdown and document table are populated immediately.
+
 Common launcher options:
 
 ```bash
@@ -52,6 +58,9 @@ START_DOCKER_FLOWISE=1 ./start.sh
 
 # Do not open FastAPI Swagger automatically
 OPEN_FASTAPI=0 ./start.sh
+
+# Skip demo customer document preload
+PRELOAD_DEMO_DATASET=0 ./start.sh
 ```
 
 The old full dashboard can still be launched with:
@@ -77,6 +86,16 @@ Important files:
 | `startallagent.sh` | Legacy full-dashboard launcher |
 
 ## Document Uploads And Customer Parsing
+
+The app ships with a demo dataset:
+
+`docfactor_banking_demo_dataset/customer_documents`
+
+Each customer folder contains synthetic financial statements, bank statements, tax summaries, loan applications, and collateral valuations. `./start.sh` mounts this folder read-only into the backend container and calls:
+
+`POST /documents/preload-demo-dataset`
+
+That endpoint copies supported files into the backend upload store, creates missing demo customers, and upserts document rows.
 
 The upload flow supports both individual files and folder uploads. Folder uploads preserve browser-relative paths and the UI parses customer codes from names like:
 
@@ -233,6 +252,8 @@ Important local defaults:
 | `START_DOCKER_DAEMON` | `1` |
 | `START_OLLAMA` | `1` |
 | `INSTALL_REQUIREMENTS` | `1` |
+| `PRELOAD_DEMO_DATASET` | `1` |
+| `DEMO_CUSTOMER_DOCUMENTS_DIR` | `/app/demo/customer_documents` |
 | `PYTHON_VENV_DIR` | `.venv` |
 
 ## Development Checks

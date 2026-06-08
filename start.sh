@@ -12,6 +12,7 @@ STREAMLIT_URL="${STREAMLIT_URL:-http://127.0.0.1:8501}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 PYTHON_VENV_DIR="${PYTHON_VENV_DIR:-${APP_DIR}/.venv}"
 INSTALL_REQUIREMENTS="${INSTALL_REQUIREMENTS:-1}"
+PRELOAD_DEMO_DATASET="${PRELOAD_DEMO_DATASET:-1}"
 START_STACK="${START_STACK:-1}"
 OPEN_BROWSER="${OPEN_BROWSER:-0}"
 OPEN_FASTAPI="${OPEN_FASTAPI:-1}"
@@ -60,6 +61,25 @@ wait_for_url() {
   done
 
   echo "Warning: ${name} did not answer at ${url} yet."
+}
+
+preload_demo_dataset() {
+  if [[ "$PRELOAD_DEMO_DATASET" != "1" ]]; then
+    echo "Skipping demo customer document preload. PRELOAD_DEMO_DATASET=${PRELOAD_DEMO_DATASET}"
+    return 0
+  fi
+
+  if [[ ! -d "${APP_DIR}/docfactor_banking_demo_dataset/customer_documents" ]]; then
+    echo "Demo customer document dataset not found; skipping preload."
+    return 0
+  fi
+
+  echo "Preloading demo customer documents into FastAPI..."
+  if curl --max-time 120 -fsS -X POST "${BACKEND_URL}/documents/preload-demo-dataset" >/dev/null; then
+    echo "Demo customer document preload complete."
+  else
+    echo "Warning: demo customer document preload failed. Use Recover saved in the UI or check FastAPI logs."
+  fi
 }
 
 requirements_fingerprint() {
@@ -340,6 +360,7 @@ echo "$WEB_PID" >"${APP_DIR}/web.pid"
 
 wait_for_url "http://127.0.0.1:${WEB_PORT}" "Launcher web UI" 20
 wait_for_url "${BACKEND_URL}/health" "FastAPI backend" 20
+preload_demo_dataset
 
 if [[ "$OPEN_BROWSER" == "1" ]]; then
   open_url "http://127.0.0.1:${WEB_PORT}"
@@ -370,6 +391,7 @@ Local Flowise is started by default. Use START_LOCAL_FLOWISE=0 to skip it.
 Docker daemon startup is attempted by default. Use START_DOCKER_DAEMON=0 to skip it.
 Ollama startup is attempted by default. Use START_OLLAMA=0 to skip it.
 Python requirements install is enabled by default. Use INSTALL_REQUIREMENTS=0 to skip it.
+Demo customer document preload is enabled by default. Use PRELOAD_DEMO_DATASET=0 to skip it.
 EOF
 
 if [[ "$OPEN_BROWSER" == "1" ]] && command -v xdg-open >/dev/null 2>&1; then

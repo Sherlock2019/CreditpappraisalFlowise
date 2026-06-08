@@ -20,6 +20,7 @@ services:
     environment:
       FLOWISE_API_URL: http://host.docker.internal:3001
       OLLAMA_BASE_URL: http://host.docker.internal:11434
+      DEMO_CUSTOMER_DOCUMENTS_DIR: /app/demo/customer_documents
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -28,6 +29,7 @@ services:
       - postgres
     volumes:
       - ./data/uploads:/app/data/uploads
+      - ../docfactor_banking_demo_dataset/customer_documents:/app/demo/customer_documents:ro
 
   frontend:
     build: ./frontend

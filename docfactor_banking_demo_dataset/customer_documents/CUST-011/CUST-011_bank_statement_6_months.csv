@@ -1,0 +1,13 @@
+date,description,credit_usd,debit_usd,balance_usd,flag
+2025-07-05,Monthly inflow / salary / sales,14914.23,0,3662.74,
+2025-07-19,Operating expenses / household expenses,0,14306.49,-10643.75,
+2025-08-04,Monthly inflow / salary / sales,36226.55,0,15972.17,unusual_large_deposit
+2025-08-18,Operating expenses / household expenses,0,9610.63,6361.53,
+2025-09-03,Monthly inflow / salary / sales,15354.9,0,9161.43,
+2025-09-17,Operating expenses / household expenses,0,12555.0,-3393.57,
+2025-10-03,Monthly inflow / salary / sales,17772.76,0,1945.45,
+2025-10-17,Operating expenses / household expenses,0,12433.73,-10488.28,
+2025-11-02,Monthly inflow / salary / sales,32021.31,0,10027.8,unusual_large_deposit
+2025-11-16,Operating expenses / household expenses,0,11505.23,-1477.43,
+2025-12-02,Monthly inflow / salary / sales,17002.88,0,5294.59,
+2025-12-16,Operating expenses / household expenses,0,10230.86,-4936.27,

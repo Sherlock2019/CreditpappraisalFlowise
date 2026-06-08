@@ -13,7 +13,7 @@ from app.audit import log_event
 from app.config import get_settings
 from app.database import get_db
 from app.document_cache import document_memory_cache
-from app.document_recovery import recover_uploaded_files_from_disk
+from app.document_recovery import preload_demo_customer_documents, recover_uploaded_files_from_disk
 from app.document_parser import chunk_sections, parse_document
 from app.embeddings import create_embedding
 from app.flowise_compat import ensure_customer, external_document_id, parse_external_document_id
@@ -208,6 +208,11 @@ def deduplicate_documents(customer_id: int | None = None, db: Session = Depends(
 @router.post("/documents/recover-from-disk")
 def recover_documents_from_disk(db: Session = Depends(get_db)) -> dict[str, Any]:
     return recover_uploaded_files_from_disk(db)
+
+
+@router.post("/documents/preload-demo-dataset")
+def preload_demo_documents(db: Session = Depends(get_db)) -> dict[str, Any]:
+    return preload_demo_customer_documents(db)
 
 
 def ingest_document_record(db: Session, document: models.Document) -> int:

@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     workflow_state_dir: str = "/app/data/workflow_state"
     email_draft_dir: str = "/app/data/email_drafts"
     upload_dir: str = "/app/data/uploads"
+    demo_customer_documents_dir: str = "/app/demo/customer_documents"
     s3_endpoint_url: str | None = None
     s3_access_key_id: str | None = None
     s3_secret_access_key: str | None = None
