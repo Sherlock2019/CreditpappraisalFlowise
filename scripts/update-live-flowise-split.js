@@ -9,6 +9,24 @@ const uiImportPath = path.join(ROOT, "flowise_project", "generated", "live-flowi
 const apiImportPath = path.join(ROOT, "flowise_project", "generated", "live-flowise-api-import-from-db.json");
 
 const flow = JSON.parse(fs.readFileSync(flowDataPath, "utf8"));
+const REMOVED_NODE_IDS = new Set([
+  "document_status",
+  "retriever",
+  "ollama_mistral",
+  "loan_policy_scoring",
+  "dti",
+  "ltv",
+  "interest_rate",
+  "monthly_payment",
+  "recommendation",
+  "credit_assessment",
+  "approval_committee",
+  "final_decision",
+  "customer_email_draft",
+  "audit_logging",
+  "chat_output",
+]);
+flow.nodes = flow.nodes.filter((node) => !REMOVED_NODE_IDS.has(node.id));
 const nodeById = new Map(flow.nodes.map((node) => [node.id, node]));
 
 function cloneFunctionNode(baseId, id, label, position) {
@@ -36,10 +54,6 @@ function cloneFunctionNode(baseId, id, label, position) {
   return node;
 }
 
-if (!nodeById.has("document_status")) {
-  cloneFunctionNode("parser", "document_status", "Document Status", { x: 720, y: 390 });
-}
-
 function setFunction(id, functionName, javascriptFunction) {
   const node = nodeById.get(id);
   if (!node) throw new Error(`Missing node ${id}`);
@@ -49,6 +63,13 @@ function setFunction(id, functionName, javascriptFunction) {
     functionName,
     javascriptFunction,
   };
+}
+
+function setLabel(id, label, description = label) {
+  const node = nodeById.get(id);
+  if (!node) throw new Error(`Missing node ${id}`);
+  node.data.label = label;
+  node.data.description = description;
 }
 
 function setStatusNode(id, label, statusKey) {
@@ -69,6 +90,25 @@ return {
   );
 }
 
+setLabel("chat_input", "Chat Input", "Receive user question");
+setLabel("runtime_vars", "Runtime Variables", "Pass customer, model, language, and session context");
+setLabel("document_upload", "Document Upload", "HTTP call to /documents/upload");
+setLabel("parser", "Parser", "Backend pipeline status node");
+setLabel("chunker", "Chunker", "Backend pipeline status node");
+setLabel("embeddings", "Embeddings", "Backend pipeline status node");
+setLabel("postgresql", "PostgreSQL", "Visual storage reference node");
+setLabel("pgvector", "pgvector", "Visual vector index reference node");
+setLabel("http_retrieval_tool", "Retrieval", "HTTP retrieval node");
+setLabel("citation_builder", "Citation Builder", "Format retrieved chunks into citation-ready evidence");
+setLabel("prompt_template", "Prompt Template", "Build final LISA prompt");
+setLabel("llm_router", "LLM Router", "Select local or public model route");
+setLabel("ollama_gemma", "Ollama Local Model", "ChatOllama node");
+setLabel("openai_provider", "OpenAI", "Provider node");
+setLabel("deepseek_provider", "DeepSeek", "Provider/custom API node");
+setLabel("custom_provider", "Custom API", "Provider/custom API node");
+setLabel("llm_chain", "LLM Chain", "Execute prompt and selected model");
+setLabel("output_parser", "Output Parser", "Structure LISA response");
+
 setFunction(
   "runtime_vars",
   "runtime_variables",
@@ -82,6 +122,7 @@ setFunction(
   llm_provider: $vars?.llm_provider || $input?.llm_provider || "ollama",
   llm_model: $vars?.llm_model || $input?.llm_model || "mistral",
   policy_mode: $vars?.policy_mode || $input?.policy_mode || "standard_credit_policy",
+  backend_base_url: $vars?.backend_base_url || $input?.backend_base_url || "http://127.0.0.1:8000",
   require_citations: true,
   require_human_review: true,
   input: $input
@@ -97,7 +138,7 @@ return {
   role: "http_call_or_status",
   backend_owner: "FastAPI",
   method: "POST",
-  endpoint: "http://host.docker.internal:8000/documents/upload",
+  endpoint: \`\${input.backend_base_url || "http://127.0.0.1:8000"}/documents/upload\`,
   expected_form_fields: {
     customer_id: input.customer_id || "demo_customer",
     session_id: input.session_id || "demo_session",
@@ -108,46 +149,22 @@ return {
 };`
 );
 
-setFunction(
-  "document_status",
-  "document_status",
-  `const input = $input || {};
-const documentId = input.document_id || input.id || null;
-return {
-  component: "Document Status",
-  role: "http_call_or_status",
-  backend_owner: "FastAPI",
-  method: "GET",
-  endpoint: documentId ? \`http://host.docker.internal:8000/documents/\${documentId}/status\` : null,
-  expected_response: {
-    ingestion_status: {
-      parser: "pending|complete|failed",
-      chunker: "pending|complete|failed",
-      embeddings: "pending|complete|failed",
-      postgresql: "pending|complete|failed",
-      pgvector: "pending|complete|failed"
-    }
-  },
-  input
-};`
-);
-
-setStatusNode("parser", "Parser Status", "parser");
-setStatusNode("chunker", "Chunker Status", "chunker");
-setStatusNode("embeddings", "Embeddings Status", "embeddings");
-setStatusNode("postgresql", "PostgreSQL Storage Status", "postgresql");
-setStatusNode("pgvector", "pgvector Index Status", "pgvector");
+setStatusNode("parser", "Parser", "parser");
+setStatusNode("chunker", "Chunker", "chunker");
+setStatusNode("embeddings", "Embeddings", "embeddings");
+setStatusNode("postgresql", "PostgreSQL", "postgresql");
+setStatusNode("pgvector", "pgvector", "pgvector");
 
 setFunction(
   "http_retrieval_tool",
   "http_retrieval_tool",
-  `const input = $input || {};
+`const input = $input || {};
 return {
   component: "HTTP Retrieval Tool",
   role: "http_call",
   backend_owner: "FastAPI",
   method: "POST",
-  endpoint: "http://host.docker.internal:8000/retrieval/query",
+  endpoint: \`\${input.backend_base_url || "http://127.0.0.1:8000"}/retrieval/query\`,
   body: {
     customer_id: input.customer_id || "demo_customer",
     session_id: input.session_id || "demo_session",
@@ -155,19 +172,6 @@ return {
     top_k: 8,
     filters: { policy_mode: input.policy_mode || "standard_credit_policy" }
   },
-  input
-};`
-);
-
-setFunction(
-  "retriever",
-  "retriever",
-  `const input = $input || {};
-return {
-  component: "Retriever Status",
-  role: "visual_status_only",
-  backend_owner: "FastAPI",
-  evidence_count: (input.evidence || input.retrieved_chunks || []).length,
   input
 };`
 );
@@ -206,42 +210,6 @@ return {
 );
 
 setFunction(
-  "loan_policy_scoring",
-  "loan_policy_scoring",
-  `const input = $input || {};
-return {
-  component: "Loan Policy Scoring",
-  role: "http_call",
-  backend_owner: "FastAPI",
-  method: "POST",
-  endpoint: "http://host.docker.internal:8000/loan-policy/score",
-  body: {
-    customer_id: input.customer_id || "demo_customer",
-    session_id: input.session_id || "demo_session",
-    policy_mode: input.policy_mode || "standard_credit_policy",
-    question: input.question || "",
-    evidence: input.citations || []
-  },
-  input
-};`
-);
-
-for (const id of ["dti", "ltv", "interest_rate", "monthly_payment", "recommendation"]) {
-  setFunction(
-    id,
-    id,
-    `const input = $input || {};
-return {
-  component: "${nodeById.get(id).data.label}",
-  role: "visual_result_only",
-  backend_owner: "FastAPI",
-  value: input.${id} || input.policy_score?.${id} || input.input?.${id} || null,
-  input
-};`
-  );
-}
-
-setFunction(
   "llm_router",
   "llm_router",
   `const input = $input || {};
@@ -256,21 +224,9 @@ return {
 };`
 );
 
-setFunction(
-  "ollama_mistral",
-  "ollama_mistral",
-  `const input = $input || {};
-return {
-  component: "Ollama Provider Option",
-  provider: "ollama",
-  selected: (input.selected_provider || "ollama") === "ollama",
-  accepted_models: ["mistral", "mistral:7b", "mistral-small", "gemma", "gemma2:9b", "llama3"],
-  model: input.llm_model || "mistral",
-  input
-};`
-);
-
 const ollamaGemma = nodeById.get("ollama_gemma");
+ollamaGemma.data.label = "Ollama Local Model";
+ollamaGemma.data.description = "Run selected local model through Flowise";
 ollamaGemma.data.inputs = {
   ...(ollamaGemma.data.inputs || {}),
   baseUrl: "{{ $vars.ollama_base_url || 'http://host.docker.internal:11434' }}",
@@ -377,78 +333,6 @@ return {
 };`
 );
 
-setFunction(
-  "credit_assessment",
-  "credit_assessment",
-  `const input = $input || {};
-return {
-  component: "Credit Assessment Explanation",
-  role: "decision_support_only",
-  human_review_required: true,
-  input
-};`
-);
-
-for (const [id, functionName, endpoint] of [
-  ["approval_committee", "approval_committee", "/approval-committee/submit"],
-  ["final_decision", "final_decision", "/final-decision"],
-  ["customer_email_draft", "customer_email_draft", "/customer-decision-email/draft"],
-]) {
-  setFunction(
-    id,
-    functionName,
-    `const input = $input || {};
-return {
-  component: "${nodeById.get(id).data.label}",
-  role: "http_call_or_status",
-  backend_owner: "FastAPI",
-  method: "POST",
-  endpoint: "http://host.docker.internal:8000${endpoint}",
-  human_review_required: true,
-  input
-};`
-  );
-}
-
-setFunction(
-  "audit_logging",
-  "audit_logging",
-  `const input = $input || {};
-return {
-  component: "Audit Logging",
-  role: "http_call",
-  backend_owner: "FastAPI",
-  method: "POST",
-  endpoint: "http://host.docker.internal:8000/audit",
-  body: {
-    customer_id: input.customer_id || "demo_customer",
-    session_id: input.session_id || "demo_session",
-    user_id: input.user_id || "demo_user",
-    workflow_id: "${FLOW_ID}",
-    workflow_name: "${FLOW_NAME}",
-    question: input.question || "",
-    llm_provider: input.llm_provider || "ollama",
-    llm_model: input.llm_model || "mistral",
-    evidence_ids: (input.citations || []).map(c => c.chunk_id).filter(Boolean),
-    policy_score: input.policy_score || {},
-    final_answer: input.parsed_output || input,
-    human_review_required: true
-  },
-  input
-};`
-);
-
-setFunction(
-  "chat_output",
-  "chat_output",
-  `const input = $input || {};
-return {
-  component: "Chat Output",
-  answer: input.raw_answer || input.answer || input.text || input,
-  human_review_required: true
-};`
-);
-
 function edge(source, target) {
   const sourceHandle = `${source}-output-output-string|number|boolean|json|array`;
   const targetHandle = `${target}-input-input-string|number|boolean|json|array`;
@@ -465,45 +349,26 @@ function edge(source, target) {
 const pairs = [
   ["chat_input", "runtime_vars"],
   ["runtime_vars", "document_upload"],
-  ["document_upload", "document_status"],
-  ["document_status", "parser"],
+  ["document_upload", "parser"],
   ["parser", "chunker"],
   ["chunker", "embeddings"],
   ["embeddings", "postgresql"],
   ["postgresql", "pgvector"],
   ["pgvector", "http_retrieval_tool"],
-  ["http_retrieval_tool", "retriever"],
-  ["retriever", "citation_builder"],
-  ["citation_builder", "loan_policy_scoring"],
-  ["loan_policy_scoring", "dti"],
-  ["loan_policy_scoring", "ltv"],
-  ["loan_policy_scoring", "interest_rate"],
-  ["interest_rate", "monthly_payment"],
-  ["dti", "recommendation"],
-  ["ltv", "recommendation"],
-  ["monthly_payment", "recommendation"],
-  ["recommendation", "prompt_template"],
+  ["http_retrieval_tool", "citation_builder"],
   ["citation_builder", "prompt_template"],
   ["runtime_vars", "prompt_template"],
   ["prompt_template", "llm_chain"],
   ["runtime_vars", "llm_router"],
-  ["llm_router", "ollama_mistral"],
   ["llm_router", "ollama_gemma"],
   ["llm_router", "openai_provider"],
   ["llm_router", "deepseek_provider"],
   ["llm_router", "custom_provider"],
-  ["ollama_mistral", "llm_chain"],
   ["ollama_gemma", "llm_chain"],
   ["openai_provider", "llm_chain"],
   ["deepseek_provider", "llm_chain"],
   ["custom_provider", "llm_chain"],
   ["llm_chain", "output_parser"],
-  ["output_parser", "credit_assessment"],
-  ["credit_assessment", "approval_committee"],
-  ["approval_committee", "final_decision"],
-  ["final_decision", "customer_email_draft"],
-  ["customer_email_draft", "audit_logging"],
-  ["audit_logging", "chat_output"],
 ];
 flow.edges = pairs.map(([source, target]) => edge(source, target));
 
@@ -523,6 +388,7 @@ const uiPayload = {
     "llm_provider",
     "llm_model",
     "policy_mode",
+    "backend_base_url",
     "question",
   ],
   flowData: flow,

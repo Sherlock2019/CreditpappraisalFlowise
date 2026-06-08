@@ -129,6 +129,13 @@ function selectedUploadFiles() {
   ];
 }
 
+function clearUploadInputs() {
+  for (const id of ["fileInput", "folderInput", "documentFileInput"]) {
+    const input = $(id);
+    if (input) input.value = "";
+  }
+}
+
 function uploadDisplayName(file) {
   return file.webkitRelativePath || file.name;
 }
@@ -881,8 +888,7 @@ async function uploadDocuments() {
     } else if (status) {
       status.textContent = "Upload complete. Select a document below, then click Ingest selected.";
     }
-    $("fileInput").value = "";
-    $("folderInput").value = "";
+    clearUploadInputs();
     state.selectedDocumentIds = [];
     state.selectedDocumentId = null;
     await loadDocuments(customerId);

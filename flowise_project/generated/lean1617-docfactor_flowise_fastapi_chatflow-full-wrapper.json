@@ -1,9 +1,9 @@
 {
   "id": "6f946e8b-2d35-4fd4-9ff9-158db1f0b820",
-  "name": "Docfactor Full Banking Workflow",
-  "description": "Exact export from the live Flowise SQLite chat_flow row.",
-  "deployed": true,
-  "isPublic": true,
+  "name": "Docfactor Lean Banking Workflow",
+  "description": "Lean Flowise-managed chatflow: Flowise is the workflow control plane; FAST API stages visualize backend execution for ingestion, retrieval, policy, human decision, and audit.",
+  "deployed": false,
+  "isPublic": false,
   "type": "CHATFLOW",
   "category": "Banking Credit Appraisal",
   "apiConfig": {
@@ -11,9 +11,10 @@
   },
   "chatbotConfig": {
     "starterPrompts": [
-      "Summarize this customer's credit risk.",
+      "Summarize this customer's credit risk with citations.",
       "What documents are missing for a complete credit review?",
-      "Give me a preliminary risk level with citations."
+      "Run policy scoring and explain DTI, LTV, risk, and recommendation.",
+      "Show the current document ingestion and retrieval workflow status."
     ]
   },
   "flowData": {

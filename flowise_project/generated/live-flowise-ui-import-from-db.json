@@ -23,8 +23,8 @@
         "height": 708,
         "id": "chat_input",
         "position": {
-          "x": -420,
-          "y": 260
+          "x": -600,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -75,7 +75,7 @@
           "inputs": {
             "functionInputVariables": "{}",
             "functionName": "chat_input",
-            "javascriptFunction": "return {\n  component: \"Chat Input\",\n  input: $input\n};"
+            "javascriptFunction": "return {\n  component: \"Chat Input\",\n  role: \"flowise_managed\",\n  question: $input?.question || $input || \"\",\n  input: $input\n};"
           },
           "outputAnchors": [
             {
@@ -92,8 +92,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": -420,
-          "y": 260
+          "x": -600,
+          "y": 240
         },
         "dragging": false
       },
@@ -102,8 +102,8 @@
         "height": 708,
         "id": "runtime_vars",
         "position": {
-          "x": -40,
-          "y": 260
+          "x": -240,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -153,8 +153,8 @@
           ],
           "inputs": {
             "functionInputVariables": "{}",
-            "functionName": "runtime_variables",
-            "javascriptFunction": "return {\n  component: \"Runtime Variables\",\n  question: $input?.question || $input || \"\",\n  customer_id: $vars?.customer_id || $input?.customer_id || \"demo_customer\",\n  session_id: $vars?.session_id || $input?.session_id || \"demo_session\",\n  user_id: $vars?.user_id || $input?.user_id || \"demo_user\",\n  language: $vars?.language || $input?.language || \"en\",\n  llm_provider: $vars?.llm_provider || $input?.llm_provider || \"ollama\",\n  llm_model: $vars?.llm_model || $input?.llm_model || \"mistral\",\n  policy_mode: $vars?.policy_mode || $input?.policy_mode || \"standard_credit_policy\",\n  require_citations: true,\n  require_human_review: true,\n  input: $input\n};"
+            "functionName": "runtime_vars",
+            "javascriptFunction": "const raw = $input || {};\nreturn {\n  component: \"Runtime Variables\",\n  role: \"flowise_managed\",\n  question: raw.question || raw.input || raw || \"\",\n  customer_id: $vars?.customer_id || raw.customer_id || \"demo_customer\",\n  session_id: $vars?.session_id || raw.session_id || \"demo_session\",\n  user_id: $vars?.user_id || raw.user_id || \"demo_user\",\n  language: $vars?.language || raw.language || \"en\",\n  llm_provider: ($vars?.llm_provider || raw.llm_provider || \"ollama\").toLowerCase(),\n  llm_model: $vars?.llm_model || raw.llm_model || \"mistral\",\n  temperature: Number($vars?.temperature || raw.temperature || 0.2),\n  policy_mode: $vars?.policy_mode || raw.policy_mode || \"standard_credit_policy\",\n  backend_base_url: $vars?.backend_base_url || raw.backend_base_url || \"http://host.docker.internal:8000\",\n  require_citations: true,\n  require_human_review: true,\n  input: raw\n};"
           },
           "outputAnchors": [
             {
@@ -171,23 +171,23 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": -40,
-          "y": 260
+          "x": -240,
+          "y": 240
         },
         "dragging": false
       },
       {
         "width": 300,
         "height": 708,
-        "id": "http_retrieval_tool",
+        "id": "workflow_config",
         "position": {
-          "x": 340,
-          "y": 260
+          "x": 120,
+          "y": 240
         },
         "type": "customNode",
         "data": {
-          "id": "http_retrieval_tool",
-          "label": "HTTP Retrieval Tool",
+          "id": "workflow_config",
+          "label": "Flowise Workflow Configuration",
           "version": 3,
           "name": "customFunction",
           "type": "CustomFunction",
@@ -196,7 +196,7 @@
             "Utilities"
           ],
           "category": "Utilities",
-          "description": "HTTP Retrieval Tool",
+          "description": "Flowise Workflow Configuration",
           "inputParams": [
             {
               "label": "Input Variables",
@@ -205,20 +205,20 @@
               "optional": true,
               "acceptVariable": true,
               "list": true,
-              "id": "http_retrieval_tool-input-functionInputVariables-json"
+              "id": "workflow_config-input-functionInputVariables-json"
             },
             {
               "label": "Function Name",
               "name": "functionName",
               "type": "string",
               "optional": true,
-              "id": "http_retrieval_tool-input-functionName-string"
+              "id": "workflow_config-input-functionName-string"
             },
             {
               "label": "Javascript Function",
               "name": "javascriptFunction",
               "type": "code",
-              "id": "http_retrieval_tool-input-javascriptFunction-code"
+              "id": "workflow_config-input-javascriptFunction-code"
             }
           ],
           "inputAnchors": [
@@ -227,17 +227,17 @@
               "name": "input",
               "type": "string | number | boolean | json | array",
               "optional": true,
-              "id": "http_retrieval_tool-input-input-string|number|boolean|json|array"
+              "id": "workflow_config-input-input-string|number|boolean|json|array"
             }
           ],
           "inputs": {
             "functionInputVariables": "{}",
-            "functionName": "http_retrieval_tool",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"HTTP Retrieval Tool\",\n  role: \"http_call\",\n  backend_owner: \"FastAPI\",\n  method: \"POST\",\n  endpoint: \"http://host.docker.internal:8000/retrieval/query\",\n  body: {\n    customer_id: input.customer_id || \"demo_customer\",\n    session_id: input.session_id || \"demo_session\",\n    question: input.question || \"\",\n    top_k: 8,\n    filters: { policy_mode: input.policy_mode || \"standard_credit_policy\" }\n  },\n  input\n};"
+            "functionName": "workflow_config",
+            "javascriptFunction": "const input = $input || {};\nreturn {\n  ...input,\n  component: \"Flowise Workflow Configuration\",\n  role: \"flowise_managed_control_plane\",\n  stage_config: {\n    document_upload: {\n      enabled: $vars?.upload_enabled !== \"false\",\n      required_documents: ($vars?.required_documents || \"bank_statement,payslip,collateral_valuation\").split(\",\").map(x => x.trim()).filter(Boolean),\n      allowed_file_types: ($vars?.allowed_file_types || \"pdf,docx,xlsx,csv,png,jpg,jpeg,txt\").split(\",\").map(x => x.trim()).filter(Boolean),\n      max_file_count: Number($vars?.max_file_count || 10)\n    },\n    parser: {\n      enabled: $vars?.parser_enabled !== \"false\",\n      mode: $vars?.parser_mode || \"ocr_tables\",\n      language: input.language || \"en\",\n      strict_mode: $vars?.parser_strict_mode !== \"false\"\n    },\n    chunker: {\n      enabled: $vars?.chunker_enabled !== \"false\",\n      chunk_size: Number($vars?.chunk_size || 800),\n      chunk_overlap: Number($vars?.chunk_overlap || 120),\n      strategy: $vars?.chunk_strategy || \"by_section_then_page\",\n      max_chunks: Number($vars?.max_chunks || 500)\n    },\n    embeddings: {\n      enabled: $vars?.embeddings_enabled !== \"false\",\n      provider: $vars?.embedding_provider || \"local\",\n      model: $vars?.embedding_model || \"nomic-embed-text\",\n      batch_size: Number($vars?.embedding_batch_size || 32),\n      reembed: $vars?.reembed === \"true\"\n    },\n    postgresql: {\n      enabled: true,\n      storage_profile: $vars?.storage_profile || \"default_credit_appraisal\",\n      schema: $vars?.db_schema || \"public\",\n      retention_days: Number($vars?.retention_days || 365)\n    },\n    pgvector: {\n      enabled: true,\n      index_profile: $vars?.vector_index_profile || \"credit_documents_v1\",\n      similarity_metric: $vars?.similarity_metric || \"cosine\",\n      score_threshold: Number($vars?.score_threshold || 0.72)\n    },\n    retrieval: {\n      enabled: true,\n      top_k: Number($vars?.top_k || 8),\n      document_types: ($vars?.retrieval_document_types || \"bank_statement,payslip,collateral_valuation,policy\").split(\",\").map(x => x.trim()).filter(Boolean),\n      customer_scope: $vars?.customer_scope || \"customer_only\",\n      include_policy_context: $vars?.include_policy_context !== \"false\"\n    },\n    policy_score: {\n      enabled: $vars?.policy_score_enabled !== \"false\",\n      policy_mode: input.policy_mode || \"standard_credit_policy\",\n      product_type: $vars?.product_type || \"generic_credit\",\n      dti_warning_threshold: Number($vars?.dti_warning_threshold || 0.35),\n      dti_reject_threshold: Number($vars?.dti_reject_threshold || 0.45),\n      ltv_warning_threshold: Number($vars?.ltv_warning_threshold || 0.70),\n      ltv_reject_threshold: Number($vars?.ltv_reject_threshold || 0.85)\n    },\n    audit: {\n      enabled: $vars?.audit_enabled !== \"false\",\n      level: $vars?.audit_level || \"full\"\n    }\n  }\n};"
           },
           "outputAnchors": [
             {
-              "id": "http_retrieval_tool-output-output-string|number|boolean|json|array",
+              "id": "workflow_config-output-output-string|number|boolean|json|array",
               "name": "output",
               "label": "Output",
               "type": "string | number | boolean | json | array"
@@ -250,8 +250,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 340,
-          "y": 260
+          "x": 120,
+          "y": 240
         },
         "dragging": false
       },
@@ -260,8 +260,8 @@
         "height": 708,
         "id": "document_upload",
         "position": {
-          "x": 340,
-          "y": 760
+          "x": 480,
+          "y": 520
         },
         "type": "customNode",
         "data": {
@@ -312,7 +312,7 @@
           "inputs": {
             "functionInputVariables": "{}",
             "functionName": "document_upload",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Document Upload Trigger / Status\",\n  role: \"http_call_or_status\",\n  backend_owner: \"FastAPI\",\n  method: \"POST\",\n  endpoint: \"http://host.docker.internal:8000/documents/upload\",\n  expected_form_fields: {\n    customer_id: input.customer_id || \"demo_customer\",\n    session_id: input.session_id || \"demo_session\",\n    source: \"flowise\",\n    file: \"<uploaded file>\"\n  },\n  input\n};"
+            "javascriptFunction": "const input = $input || {};\nreturn {\n  ...input,\n  component: \"Document Upload\",\n  role: \"flowise_managed_fastapi_executed\",\n  stage: \"document_upload\",\n  enabled: input.stage_config?.document_upload?.enabled ?? true,\n  method: \"POST\",\n  endpoint: `${input.backend_base_url}/documents/upload`,\n  expected_form_fields: {\n    customer_id: input.customer_id,\n    session_id: input.session_id,\n    source: \"flowise\",\n    file: \"<uploaded file>\"\n  },\n  config: input.stage_config?.document_upload || {}\n};"
           },
           "outputAnchors": [
             {
@@ -329,23 +329,23 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 340,
-          "y": 760
+          "x": 480,
+          "y": 520
         },
         "dragging": false
       },
       {
-        "width": 300,
+        "width": 420,
         "height": 708,
-        "id": "parser",
+        "id": "fastapi_ingestion_stages",
         "position": {
-          "x": 720,
-          "y": 760
+          "x": 840,
+          "y": 520
         },
         "type": "customNode",
         "data": {
-          "id": "parser",
-          "label": "Parser",
+          "id": "fastapi_ingestion_stages",
+          "label": "FAST API Stages: Upload → Parser → Chunker → Embeddings → PostgreSQL → pgvector",
           "version": 3,
           "name": "customFunction",
           "type": "CustomFunction",
@@ -354,7 +354,7 @@
             "Utilities"
           ],
           "category": "Utilities",
-          "description": "Parser",
+          "description": "FAST API Stages: Upload → Parser → Chunker → Embeddings → PostgreSQL → pgvector",
           "inputParams": [
             {
               "label": "Input Variables",
@@ -363,20 +363,20 @@
               "optional": true,
               "acceptVariable": true,
               "list": true,
-              "id": "parser-input-functionInputVariables-json"
+              "id": "fastapi_ingestion_stages-input-functionInputVariables-json"
             },
             {
               "label": "Function Name",
               "name": "functionName",
               "type": "string",
               "optional": true,
-              "id": "parser-input-functionName-string"
+              "id": "fastapi_ingestion_stages-input-functionName-string"
             },
             {
               "label": "Javascript Function",
               "name": "javascriptFunction",
               "type": "code",
-              "id": "parser-input-javascriptFunction-code"
+              "id": "fastapi_ingestion_stages-input-javascriptFunction-code"
             }
           ],
           "inputAnchors": [
@@ -385,17 +385,17 @@
               "name": "input",
               "type": "string | number | boolean | json | array",
               "optional": true,
-              "id": "parser-input-input-string|number|boolean|json|array"
+              "id": "fastapi_ingestion_stages-input-input-string|number|boolean|json|array"
             }
           ],
           "inputs": {
             "functionInputVariables": "{}",
-            "functionName": "parser",
-            "javascriptFunction": "const input = $input || {};\nconst status = input.ingestion_status || input.status || {};\nreturn {\n  component: \"Parser Status\",\n  role: \"visual_status_only\",\n  backend_owner: \"FastAPI\",\n  status: status.parser || input.parser || \"pending\",\n  document_id: input.document_id || null,\n  chunks_count: input.chunks_count || 0,\n  input\n};"
+            "functionName": "fastapi_ingestion_stages",
+            "javascriptFunction": "const input = $input || {};\nreturn {\n  ...input,\n  component: \"FAST API Stages: Upload → Parser → Chunker → Embeddings → PostgreSQL → pgvector\",\n  role: \"fastapi_execution_card\",\n  managed_by_flowise: true,\n  executed_by_fastapi: true,\n  stage_group: \"document_ingestion_and_indexing\",\n  endpoint_upload: `${input.backend_base_url}/documents/upload`,\n  endpoint_status: input.document_id ? `${input.backend_base_url}/documents/${input.document_id}/status` : `${input.backend_base_url}/documents/{document_id}/status`,\n  stages: [\n    { name: \"Document Upload\", owner: \"Flowise config + FastAPI execution\", config: input.stage_config?.document_upload || {} },\n    { name: \"Parser\", owner: \"Flowise config + FastAPI execution\", config: input.stage_config?.parser || {} },\n    { name: \"Chunker\", owner: \"Flowise config + FastAPI execution\", config: input.stage_config?.chunker || {} },\n    { name: \"Embeddings\", owner: \"Flowise config + FastAPI execution\", config: input.stage_config?.embeddings || {} },\n    { name: \"PostgreSQL\", owner: \"Flowise profile + FastAPI storage\", config: input.stage_config?.postgresql || {} },\n    { name: \"pgvector\", owner: \"Flowise profile + FastAPI vector index\", config: input.stage_config?.pgvector || {} }\n  ],\n  status: input.ingestion_status || {\n    upload: \"ready\",\n    parser: \"pending\",\n    chunker: \"pending\",\n    embeddings: \"pending\",\n    postgresql: \"pending\",\n    pgvector: \"pending\"\n  }\n};"
           },
           "outputAnchors": [
             {
-              "id": "parser-output-output-string|number|boolean|json|array",
+              "id": "fastapi_ingestion_stages-output-output-string|number|boolean|json|array",
               "name": "output",
               "label": "Output",
               "type": "string | number | boolean | json | array"
@@ -408,23 +408,23 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 720,
-          "y": 760
+          "x": 840,
+          "y": 520
         },
         "dragging": false
       },
       {
-        "width": 300,
+        "width": 380,
         "height": 708,
-        "id": "chunker",
+        "id": "fastapi_retrieval_stages",
         "position": {
-          "x": 1100,
-          "y": 760
+          "x": 480,
+          "y": 240
         },
         "type": "customNode",
         "data": {
-          "id": "chunker",
-          "label": "Chunker",
+          "id": "fastapi_retrieval_stages",
+          "label": "FAST API Stages: Retrieval → Retriever",
           "version": 3,
           "name": "customFunction",
           "type": "CustomFunction",
@@ -433,7 +433,7 @@
             "Utilities"
           ],
           "category": "Utilities",
-          "description": "Chunker",
+          "description": "FAST API Stages: Retrieval → Retriever",
           "inputParams": [
             {
               "label": "Input Variables",
@@ -442,20 +442,20 @@
               "optional": true,
               "acceptVariable": true,
               "list": true,
-              "id": "chunker-input-functionInputVariables-json"
+              "id": "fastapi_retrieval_stages-input-functionInputVariables-json"
             },
             {
               "label": "Function Name",
               "name": "functionName",
               "type": "string",
               "optional": true,
-              "id": "chunker-input-functionName-string"
+              "id": "fastapi_retrieval_stages-input-functionName-string"
             },
             {
               "label": "Javascript Function",
               "name": "javascriptFunction",
               "type": "code",
-              "id": "chunker-input-javascriptFunction-code"
+              "id": "fastapi_retrieval_stages-input-javascriptFunction-code"
             }
           ],
           "inputAnchors": [
@@ -464,17 +464,17 @@
               "name": "input",
               "type": "string | number | boolean | json | array",
               "optional": true,
-              "id": "chunker-input-input-string|number|boolean|json|array"
+              "id": "fastapi_retrieval_stages-input-input-string|number|boolean|json|array"
             }
           ],
           "inputs": {
             "functionInputVariables": "{}",
-            "functionName": "chunker",
-            "javascriptFunction": "const input = $input || {};\nconst status = input.ingestion_status || input.status || {};\nreturn {\n  component: \"Chunker Status\",\n  role: \"visual_status_only\",\n  backend_owner: \"FastAPI\",\n  status: status.chunker || input.chunker || \"pending\",\n  document_id: input.document_id || null,\n  chunks_count: input.chunks_count || 0,\n  input\n};"
+            "functionName": "fastapi_retrieval_stages",
+            "javascriptFunction": "const input = $input || {};\nconst retrievalConfig = input.stage_config?.retrieval || {};\nreturn {\n  ...input,\n  component: \"FAST API Stages: Retrieval → Retriever\",\n  role: \"flowise_managed_fastapi_executed\",\n  stage_group: \"retrieval\",\n  method: \"POST\",\n  endpoint: `${input.backend_base_url}/retrieval/query`,\n  body: {\n    customer_id: input.customer_id,\n    session_id: input.session_id,\n    question: input.question,\n    top_k: retrievalConfig.top_k || 8,\n    filters: {\n      policy_mode: input.policy_mode,\n      document_types: retrievalConfig.document_types || [],\n      score_threshold: input.stage_config?.pgvector?.score_threshold || 0.72,\n      customer_scope: retrievalConfig.customer_scope || \"customer_only\",\n      include_policy_context: retrievalConfig.include_policy_context ?? true\n    }\n  },\n  evidence: input.evidence || [],\n  missing_documents: input.missing_documents || []\n};"
           },
           "outputAnchors": [
             {
-              "id": "chunker-output-output-string|number|boolean|json|array",
+              "id": "fastapi_retrieval_stages-output-output-string|number|boolean|json|array",
               "name": "output",
               "label": "Output",
               "type": "string | number | boolean | json | array"
@@ -487,324 +487,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 1100,
-          "y": 760
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "embeddings",
-        "position": {
-          "x": 1480,
-          "y": 760
-        },
-        "type": "customNode",
-        "data": {
-          "id": "embeddings",
-          "label": "Embeddings",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Embeddings",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "embeddings-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "embeddings-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "embeddings-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "embeddings-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "embeddings",
-            "javascriptFunction": "const input = $input || {};\nconst status = input.ingestion_status || input.status || {};\nreturn {\n  component: \"Embeddings Status\",\n  role: \"visual_status_only\",\n  backend_owner: \"FastAPI\",\n  status: status.embeddings || input.embeddings || \"pending\",\n  document_id: input.document_id || null,\n  chunks_count: input.chunks_count || 0,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "embeddings-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 1480,
-          "y": 760
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "postgresql",
-        "position": {
-          "x": 1860,
-          "y": 760
-        },
-        "type": "customNode",
-        "data": {
-          "id": "postgresql",
-          "label": "PostgreSQL",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "PostgreSQL",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "postgresql-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "postgresql-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "postgresql-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "postgresql-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "postgresql",
-            "javascriptFunction": "const input = $input || {};\nconst status = input.ingestion_status || input.status || {};\nreturn {\n  component: \"PostgreSQL Storage Status\",\n  role: \"visual_status_only\",\n  backend_owner: \"FastAPI\",\n  status: status.postgresql || input.postgresql || \"pending\",\n  document_id: input.document_id || null,\n  chunks_count: input.chunks_count || 0,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "postgresql-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 1860,
-          "y": 760
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "pgvector",
-        "position": {
-          "x": 2240,
-          "y": 760
-        },
-        "type": "customNode",
-        "data": {
-          "id": "pgvector",
-          "label": "pgvector",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "pgvector",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "pgvector-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "pgvector-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "pgvector-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "pgvector-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "pgvector",
-            "javascriptFunction": "const input = $input || {};\nconst status = input.ingestion_status || input.status || {};\nreturn {\n  component: \"pgvector Index Status\",\n  role: \"visual_status_only\",\n  backend_owner: \"FastAPI\",\n  status: status.pgvector || input.pgvector || \"pending\",\n  document_id: input.document_id || null,\n  chunks_count: input.chunks_count || 0,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "pgvector-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 2240,
-          "y": 760
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "retriever",
-        "position": {
-          "x": 720,
-          "y": 260
-        },
-        "type": "customNode",
-        "data": {
-          "id": "retriever",
-          "label": "Retriever",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Retriever",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "retriever-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "retriever-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "retriever-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "retriever-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "retriever",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Retriever Status\",\n  role: \"visual_status_only\",\n  backend_owner: \"FastAPI\",\n  evidence_count: (input.evidence || input.retrieved_chunks || []).length,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "retriever-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 720,
-          "y": 260
+          "x": 480,
+          "y": 240
         },
         "dragging": false
       },
@@ -813,8 +497,8 @@
         "height": 708,
         "id": "citation_builder",
         "position": {
-          "x": 960,
-          "y": 260
+          "x": 840,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -865,7 +549,7 @@
           "inputs": {
             "functionInputVariables": "{}",
             "functionName": "citation_builder",
-            "javascriptFunction": "const input = $input || {};\nconst evidence = input.evidence || input.retrieved_evidence || [];\n\nconst citations = evidence.map((item, idx) => ({\n  citation_id: `C${idx + 1}`,\n  document_id: item.document_id || null,\n  chunk_id: item.chunk_id || null,\n  document_name: item.document_name || \"Unknown document\",\n  page: item.page || null,\n  score: item.score || null,\n  source_type: item.source_type || \"unknown\",\n  text: item.text || \"\"\n}));\n\nconst citation_text = citations.map(c => {\n  const pageText = c.page ? `p.${c.page}` : \"page unknown\";\n  return `[${c.citation_id}] ${c.document_name}, ${pageText}: ${c.text}`;\n}).join(\"\\n\\n\");\n\nreturn {\n  component: \"Citation Builder\",\n  customer_id: input.customer_id,\n  question: input.question,\n  citations,\n  citation_text,\n  missing_documents: input.missing_documents || [],\n  input\n};"
+            "javascriptFunction": "const input = $input || {};\nconst evidence = input.evidence || input.retrieved_evidence || [];\nconst citations = evidence.map((item, idx) => ({\n  citation_id: `C${idx + 1}`,\n  document_id: item.document_id || null,\n  chunk_id: item.chunk_id || null,\n  document_name: item.document_name || \"Unknown document\",\n  page: item.page || null,\n  score: item.score || null,\n  source_type: item.source_type || \"customer_document\",\n  text: item.text || \"\"\n}));\nconst citation_text = citations.map(c => {\n  const pageText = c.page ? `p.${c.page}` : \"page unknown\";\n  return `[${c.citation_id}] ${c.document_name}, ${pageText}: ${c.text}`;\n}).join(\"\\n\\n\");\nreturn {\n  ...input,\n  component: \"Citation Builder\",\n  role: \"flowise_managed\",\n  citations,\n  citation_text,\n  citation_chunk_ids: citations.map(c => c.chunk_id).filter(Boolean),\n  missing_documents: input.missing_documents || []\n};"
           },
           "outputAnchors": [
             {
@@ -882,18 +566,97 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 960,
-          "y": 260
+          "x": 840,
+          "y": 240
         },
         "dragging": false
       },
       {
-        "width": 300,
+        "width": 430,
+        "height": 708,
+        "id": "fastapi_policy_stages",
+        "position": {
+          "x": 1200,
+          "y": 240
+        },
+        "type": "customNode",
+        "data": {
+          "id": "fastapi_policy_stages",
+          "label": "FAST API Stages: Policy Score → DTI → LTV → Rate → Payment → Recommendation",
+          "version": 3,
+          "name": "customFunction",
+          "type": "CustomFunction",
+          "baseClasses": [
+            "CustomFunction",
+            "Utilities"
+          ],
+          "category": "Utilities",
+          "description": "FAST API Stages: Policy Score → DTI → LTV → Rate → Payment → Recommendation",
+          "inputParams": [
+            {
+              "label": "Input Variables",
+              "name": "functionInputVariables",
+              "type": "json",
+              "optional": true,
+              "acceptVariable": true,
+              "list": true,
+              "id": "fastapi_policy_stages-input-functionInputVariables-json"
+            },
+            {
+              "label": "Function Name",
+              "name": "functionName",
+              "type": "string",
+              "optional": true,
+              "id": "fastapi_policy_stages-input-functionName-string"
+            },
+            {
+              "label": "Javascript Function",
+              "name": "javascriptFunction",
+              "type": "code",
+              "id": "fastapi_policy_stages-input-javascriptFunction-code"
+            }
+          ],
+          "inputAnchors": [
+            {
+              "label": "Input",
+              "name": "input",
+              "type": "string | number | boolean | json | array",
+              "optional": true,
+              "id": "fastapi_policy_stages-input-input-string|number|boolean|json|array"
+            }
+          ],
+          "inputs": {
+            "functionInputVariables": "{}",
+            "functionName": "fastapi_policy_stages",
+            "javascriptFunction": "const input = $input || {};\nconst policyConfig = input.stage_config?.policy_score || {};\nreturn {\n  ...input,\n  component: \"FAST API Stages: Policy Score → DTI → LTV → Rate → Payment → Recommendation\",\n  role: \"flowise_managed_fastapi_executed\",\n  stage_group: \"policy_scoring\",\n  method: \"POST\",\n  endpoint: `${input.backend_base_url}/loan-policy/score`,\n  body: {\n    customer_id: input.customer_id,\n    session_id: input.session_id,\n    policy_mode: policyConfig.policy_mode || input.policy_mode,\n    product_type: policyConfig.product_type || \"generic_credit\",\n    question: input.question,\n    evidence: input.citations || [],\n    thresholds: {\n      dti_warning_threshold: policyConfig.dti_warning_threshold,\n      dti_reject_threshold: policyConfig.dti_reject_threshold,\n      ltv_warning_threshold: policyConfig.ltv_warning_threshold,\n      ltv_reject_threshold: policyConfig.ltv_reject_threshold\n    }\n  },\n  policy_score: input.policy_score || {\n    dti: input.dti || null,\n    ltv: input.ltv || null,\n    interest_rate: input.interest_rate || null,\n    monthly_payment: input.monthly_payment || null,\n    risk_level: input.risk_level || \"unknown\",\n    recommendation: input.recommendation || \"human_review_required\",\n    human_review_required: true\n  }\n};"
+          },
+          "outputAnchors": [
+            {
+              "id": "fastapi_policy_stages-output-output-string|number|boolean|json|array",
+              "name": "output",
+              "label": "Output",
+              "type": "string | number | boolean | json | array"
+            }
+          ],
+          "outputs": {
+            "output": "output"
+          },
+          "selected": false
+        },
+        "selected": false,
+        "positionAbsolute": {
+          "x": 1200,
+          "y": 240
+        },
+        "dragging": false
+      },
+      {
+        "width": 360,
         "height": 572,
         "id": "prompt_template",
         "position": {
-          "x": 1180,
-          "y": 260
+          "x": 1660,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -908,7 +671,7 @@
             "BasePromptTemplate"
           ],
           "category": "Prompts",
-          "description": "Credit appraisal prompt with RAG context and citations",
+          "description": "LISA credit appraisal prompt with RAG, policy score, citations, and human-review guardrails",
           "inputParams": [
             {
               "label": "Template",
@@ -953,8 +716,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 1180,
-          "y": 260
+          "x": 1660,
+          "y": 240
         },
         "dragging": false
       },
@@ -963,8 +726,8 @@
         "height": 708,
         "id": "llm_router",
         "position": {
-          "x": 1640,
-          "y": 260
+          "x": 2060,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -1015,7 +778,7 @@
           "inputs": {
             "functionInputVariables": "{}",
             "functionName": "llm_router",
-            "javascriptFunction": "const input = $input || {};\nconst provider = (input.llm_provider || $vars?.llm_provider || \"ollama\").toLowerCase();\nconst accepted = [\"ollama\", \"openai\", \"deepseek\", \"custom\"];\nreturn {\n  component: \"LLM Router\",\n  selected_provider: accepted.includes(provider) ? provider : \"ollama\",\n  llm_model: input.llm_model || $vars?.llm_model || \"mistral\",\n  route_mode: \"single_selectable_provider\",\n  input\n};"
+            "javascriptFunction": "const input = $input || {};\nconst provider = (input.llm_provider || \"ollama\").toLowerCase();\nconst accepted = [\"ollama\", \"openai\", \"deepseek\", \"custom\"];\nreturn {\n  ...input,\n  component: \"LLM Router\",\n  role: \"flowise_managed\",\n  route_mode: \"single_selectable_provider\",\n  selected_provider: accepted.includes(provider) ? provider : \"ollama\",\n  selected_model: input.llm_model || \"mistral\",\n  provider_options: {\n    ollama: { enabled: true, local_private: true, base_url: $vars?.ollama_base_url || \"http://host.docker.internal:11434\" },\n    openai: { enabled: $vars?.openai_enabled === \"true\", secure_config: \"env_vars\" },\n    deepseek: { enabled: $vars?.deepseek_enabled === \"true\", secure_config: \"env_vars\" },\n    custom: { enabled: $vars?.custom_provider_enabled === \"true\", secure_config: \"env_vars\" }\n  }\n};"
           },
           "outputAnchors": [
             {
@@ -1032,102 +795,23 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 1640,
-          "y": 260
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "ollama_mistral",
-        "position": {
-          "x": 1500,
-          "y": -330
-        },
-        "type": "customNode",
-        "data": {
-          "id": "ollama_mistral",
-          "label": "Ollama: Mistral Option",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Ollama: Mistral",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "ollama_mistral-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "ollama_mistral-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "ollama_mistral-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "ollama_mistral-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "ollama_mistral",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Ollama Provider Option\",\n  provider: \"ollama\",\n  selected: (input.selected_provider || \"ollama\") === \"ollama\",\n  accepted_models: [\"mistral\", \"mistral:7b\", \"mistral-small\", \"gemma\", \"gemma2:9b\", \"llama3\"],\n  model: input.llm_model || \"mistral\",\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "ollama_mistral-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 1500,
-          "y": -330
+          "x": 2060,
+          "y": 240
         },
         "dragging": false
       },
       {
         "width": 300,
         "height": 484,
-        "id": "ollama_gemma",
+        "id": "selected_llm_model",
         "position": {
-          "x": 1840,
-          "y": -360
+          "x": 2060,
+          "y": -300
         },
         "type": "customNode",
         "data": {
-          "id": "ollama_gemma",
-          "label": "Ollama: Selected Local Model",
+          "id": "selected_llm_model",
+          "label": "Selected LLM Model",
           "version": 5,
           "name": "chatOllama",
           "type": "ChatOllama",
@@ -1138,26 +822,26 @@
             "Runnable"
           ],
           "category": "Chat Models",
-          "description": "Ollama: Gemma",
+          "description": "Selected local/private model. Runtime model is configured by Flowise variables.",
           "inputParams": [
             {
               "label": "Base URL",
               "name": "baseUrl",
               "type": "string",
-              "id": "ollama_gemma-input-baseUrl-string"
+              "id": "selected_llm_model-input-baseUrl-string"
             },
             {
               "label": "Model Name",
               "name": "modelName",
               "type": "string",
-              "id": "ollama_gemma-input-modelName-string"
+              "id": "selected_llm_model-input-modelName-string"
             },
             {
               "label": "Temperature",
               "name": "temperature",
               "type": "number",
               "optional": true,
-              "id": "ollama_gemma-input-temperature-number"
+              "id": "selected_llm_model-input-temperature-number"
             }
           ],
           "inputAnchors": [],
@@ -1168,9 +852,9 @@
           },
           "outputAnchors": [
             {
-              "id": "ollama_gemma-output-chatOllama-ChatOllama|BaseChatModel|BaseLanguageModel|Runnable",
+              "id": "selected_llm_model-output-chatOllama-ChatOllama|BaseChatModel|BaseLanguageModel|Runnable",
               "name": "chatOllama",
-              "label": "Ollama: Gemma",
+              "label": "Selected LLM Model",
               "type": "ChatOllama | BaseChatModel | BaseLanguageModel | Runnable"
             }
           ],
@@ -1179,245 +863,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 1840,
-          "y": -360
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "openai_provider",
-        "position": {
-          "x": 2180,
-          "y": -330
-        },
-        "type": "customNode",
-        "data": {
-          "id": "openai_provider",
-          "label": "OpenAI",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "OpenAI",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "openai_provider-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "openai_provider-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "openai_provider-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "openai_provider-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "openai",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"OpenAI Provider Option\",\n  provider: \"openai\",\n  selected: input.selected_provider === \"openai\",\n  model: input.llm_model || \"\",\n  secure_config: \"env_vars\",\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "openai_provider-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 2180,
-          "y": -330
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "deepseek_provider",
-        "position": {
-          "x": 2560,
-          "y": -330
-        },
-        "type": "customNode",
-        "data": {
-          "id": "deepseek_provider",
-          "label": "DeepSeek",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "DeepSeek",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "deepseek_provider-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "deepseek_provider-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "deepseek_provider-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "deepseek_provider-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "deepseek",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"DeepSeek Provider Option\",\n  provider: \"deepseek\",\n  selected: input.selected_provider === \"deepseek\",\n  model: input.llm_model || \"\",\n  secure_config: \"env_vars\",\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "deepseek_provider-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 2560,
-          "y": -330
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "custom_provider",
-        "position": {
-          "x": 2940,
-          "y": -330
-        },
-        "type": "customNode",
-        "data": {
-          "id": "custom_provider",
-          "label": "Custom API",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Custom API",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "custom_provider-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "custom_provider-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "custom_provider-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "custom_provider-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "custom",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Custom API Provider Option\",\n  provider: \"custom\",\n  selected: input.selected_provider === \"custom\",\n  model: input.llm_model || \"\",\n  secure_config: \"env_vars\",\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "custom_provider-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 2940,
-          "y": -330
+          "x": 2060,
+          "y": -300
         },
         "dragging": false
       },
@@ -1426,8 +873,8 @@
         "height": 465,
         "id": "llm_chain",
         "position": {
-          "x": 1960,
-          "y": 260
+          "x": 2420,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -1442,7 +889,7 @@
             "Runnable"
           ],
           "category": "Chains",
-          "description": "Credit assessment chain",
+          "description": "Runs the LISA prompt through the selected model",
           "inputParams": [
             {
               "label": "Chain Name",
@@ -1474,10 +921,10 @@
             }
           ],
           "inputs": {
-            "model": "{{ollama_gemma.data.instance}}",
+            "model": "{{selected_llm_model.data.instance}}",
             "prompt": "{{prompt_template.data.instance}}",
             "outputParser": "",
-            "chainName": "Docfactor Full Banking Workflow"
+            "chainName": "Docfactor Lean Banking Workflow"
           },
           "outputAnchors": [
             {
@@ -1508,87 +955,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 1960,
-          "y": 260
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "credit_assessment",
-        "position": {
-          "x": 2340,
-          "y": 260
-        },
-        "type": "customNode",
-        "data": {
-          "id": "credit_assessment",
-          "label": "Credit Assessment",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Credit Assessment",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "credit_assessment-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "credit_assessment-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "credit_assessment-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "credit_assessment-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "credit_assessment",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Credit Assessment Explanation\",\n  role: \"decision_support_only\",\n  human_review_required: true,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "credit_assessment-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 2340,
-          "y": 260
+          "x": 2420,
+          "y": 240
         },
         "dragging": false
       },
@@ -1597,8 +965,8 @@
         "height": 708,
         "id": "output_parser",
         "position": {
-          "x": 2720,
-          "y": 260
+          "x": 2780,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -1649,7 +1017,7 @@
           "inputs": {
             "functionInputVariables": "{}",
             "functionName": "output_parser",
-            "javascriptFunction": "const raw = $input?.text || $input?.answer || $input || \"\";\nreturn {\n  short_answer: \"\",\n  risk_level: \"\",\n  heuristic_score: null,\n  key_evidence: [],\n  strengths: [],\n  weaknesses: [],\n  missing_documents: [],\n  loan_policy_scoring: {},\n  approval_committee_status: \"\",\n  final_decision_status: \"human_review_required\",\n  suggested_follow_up_questions: [],\n  citations: [],\n  human_review_required: true,\n  raw_answer: String(raw)\n};"
+            "javascriptFunction": "const raw = $input?.text || $input?.answer || $input?.output || $input || \"\";\nreturn {\n  component: \"Output Parser\",\n  role: \"flowise_managed\",\n  short_answer: \"\",\n  risk_level: \"\",\n  heuristic_score: null,\n  key_evidence: [],\n  strengths: [],\n  weaknesses: [],\n  missing_documents: [],\n  loan_policy_scoring: {},\n  approval_committee_status: \"not_submitted\",\n  final_decision_status: \"human_review_required\",\n  suggested_follow_up_questions: [],\n  citations: [],\n  human_review_required: true,\n  raw_answer: String(raw),\n  input: $input\n};"
           },
           "outputAnchors": [
             {
@@ -1666,23 +1034,23 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 2720,
-          "y": 260
+          "x": 2780,
+          "y": 240
         },
         "dragging": false
       },
       {
-        "width": 300,
+        "width": 430,
         "height": 708,
-        "id": "loan_policy_scoring",
+        "id": "fastapi_human_workflow_stages",
         "position": {
-          "x": 3100,
-          "y": 260
+          "x": 3140,
+          "y": 520
         },
         "type": "customNode",
         "data": {
-          "id": "loan_policy_scoring",
-          "label": "Loan Policy Scoring",
+          "id": "fastapi_human_workflow_stages",
+          "label": "FAST API Stages: Approval Committee → Final Decision → Customer Email Draft",
           "version": 3,
           "name": "customFunction",
           "type": "CustomFunction",
@@ -1691,7 +1059,7 @@
             "Utilities"
           ],
           "category": "Utilities",
-          "description": "Loan Policy Scoring",
+          "description": "FAST API Stages: Approval Committee → Final Decision → Customer Email Draft",
           "inputParams": [
             {
               "label": "Input Variables",
@@ -1700,20 +1068,20 @@
               "optional": true,
               "acceptVariable": true,
               "list": true,
-              "id": "loan_policy_scoring-input-functionInputVariables-json"
+              "id": "fastapi_human_workflow_stages-input-functionInputVariables-json"
             },
             {
               "label": "Function Name",
               "name": "functionName",
               "type": "string",
               "optional": true,
-              "id": "loan_policy_scoring-input-functionName-string"
+              "id": "fastapi_human_workflow_stages-input-functionName-string"
             },
             {
               "label": "Javascript Function",
               "name": "javascriptFunction",
               "type": "code",
-              "id": "loan_policy_scoring-input-javascriptFunction-code"
+              "id": "fastapi_human_workflow_stages-input-javascriptFunction-code"
             }
           ],
           "inputAnchors": [
@@ -1722,17 +1090,17 @@
               "name": "input",
               "type": "string | number | boolean | json | array",
               "optional": true,
-              "id": "loan_policy_scoring-input-input-string|number|boolean|json|array"
+              "id": "fastapi_human_workflow_stages-input-input-string|number|boolean|json|array"
             }
           ],
           "inputs": {
             "functionInputVariables": "{}",
-            "functionName": "loan_policy_scoring",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Loan Policy Scoring\",\n  role: \"http_call\",\n  backend_owner: \"FastAPI\",\n  method: \"POST\",\n  endpoint: \"http://host.docker.internal:8000/loan-policy/score\",\n  body: {\n    customer_id: input.customer_id || \"demo_customer\",\n    session_id: input.session_id || \"demo_session\",\n    policy_mode: input.policy_mode || \"standard_credit_policy\",\n    question: input.question || \"\",\n    evidence: input.citations || []\n  },\n  input\n};"
+            "functionName": "fastapi_human_workflow_stages",
+            "javascriptFunction": "const input = $input || {};\nreturn {\n  ...input,\n  component: \"FAST API Stages: Approval Committee → Final Decision → Customer Email Draft\",\n  role: \"fastapi_execution_card_optional\",\n  managed_by_flowise: true,\n  executed_by_fastapi: true,\n  human_review_required: true,\n  stage_group: \"human_decision_workflow\",\n  endpoints: {\n    approval_committee: `${input.backend_base_url || \"http://host.docker.internal:8000\"}/approval-committee/submit`,\n    final_decision: `${input.backend_base_url || \"http://host.docker.internal:8000\"}/final-decision`,\n    customer_email_draft: `${input.backend_base_url || \"http://host.docker.internal:8000\"}/customer-decision-email/draft`\n  },\n  note: \"LISA never approves or rejects loans. These stages are human/backend workflow stages only.\"\n};"
           },
           "outputAnchors": [
             {
-              "id": "loan_policy_scoring-output-output-string|number|boolean|json|array",
+              "id": "fastapi_human_workflow_stages-output-output-string|number|boolean|json|array",
               "name": "output",
               "label": "Output",
               "type": "string | number | boolean | json | array"
@@ -1745,23 +1113,23 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 3100,
-          "y": 260
+          "x": 3140,
+          "y": 520
         },
         "dragging": false
       },
       {
-        "width": 300,
+        "width": 380,
         "height": 708,
-        "id": "dti",
+        "id": "fastapi_audit_stage",
         "position": {
-          "x": 3100,
-          "y": 700
+          "x": 3140,
+          "y": 240
         },
         "type": "customNode",
         "data": {
-          "id": "dti",
-          "label": "DTI",
+          "id": "fastapi_audit_stage",
+          "label": "FAST API Stages: Audit Logging",
           "version": 3,
           "name": "customFunction",
           "type": "CustomFunction",
@@ -1770,7 +1138,7 @@
             "Utilities"
           ],
           "category": "Utilities",
-          "description": "DTI",
+          "description": "FAST API Stages: Audit Logging",
           "inputParams": [
             {
               "label": "Input Variables",
@@ -1779,20 +1147,20 @@
               "optional": true,
               "acceptVariable": true,
               "list": true,
-              "id": "dti-input-functionInputVariables-json"
+              "id": "fastapi_audit_stage-input-functionInputVariables-json"
             },
             {
               "label": "Function Name",
               "name": "functionName",
               "type": "string",
               "optional": true,
-              "id": "dti-input-functionName-string"
+              "id": "fastapi_audit_stage-input-functionName-string"
             },
             {
               "label": "Javascript Function",
               "name": "javascriptFunction",
               "type": "code",
-              "id": "dti-input-javascriptFunction-code"
+              "id": "fastapi_audit_stage-input-javascriptFunction-code"
             }
           ],
           "inputAnchors": [
@@ -1801,17 +1169,17 @@
               "name": "input",
               "type": "string | number | boolean | json | array",
               "optional": true,
-              "id": "dti-input-input-string|number|boolean|json|array"
+              "id": "fastapi_audit_stage-input-input-string|number|boolean|json|array"
             }
           ],
           "inputs": {
             "functionInputVariables": "{}",
-            "functionName": "dti",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"DTI\",\n  role: \"visual_result_only\",\n  backend_owner: \"FastAPI\",\n  value: input.dti || input.policy_score?.dti || input.input?.dti || null,\n  input\n};"
+            "functionName": "fastapi_audit_stage",
+            "javascriptFunction": "const input = $input || {};\nconst auditEnabled = input.stage_config?.audit?.enabled ?? true;\nreturn {\n  ...input,\n  component: \"FAST API Stages: Audit Logging\",\n  role: \"flowise_managed_fastapi_executed\",\n  enabled: auditEnabled,\n  method: \"POST\",\n  endpoint: `${input.backend_base_url || \"http://host.docker.internal:8000\"}/audit`,\n  body: {\n    customer_id: input.customer_id || \"demo_customer\",\n    session_id: input.session_id || \"demo_session\",\n    user_id: input.user_id || \"demo_user\",\n    workflow_id: \"6f946e8b-2d35-4fd4-9ff9-158db1f0b820\",\n    workflow_name: \"Docfactor Lean Banking Workflow\",\n    question: input.question || \"\",\n    llm_provider: input.llm_provider || \"ollama\",\n    llm_model: input.llm_model || \"mistral\",\n    evidence_ids: input.citation_chunk_ids || [],\n    policy_score: input.policy_score || {},\n    final_answer: input.parsed_output || input.raw_answer || input,\n    human_review_required: true\n  }\n};"
           },
           "outputAnchors": [
             {
-              "id": "dti-output-output-string|number|boolean|json|array",
+              "id": "fastapi_audit_stage-output-output-string|number|boolean|json|array",
               "name": "output",
               "label": "Output",
               "type": "string | number | boolean | json | array"
@@ -1824,640 +1192,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 3100,
-          "y": 700
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "ltv",
-        "position": {
-          "x": 3480,
-          "y": 700
-        },
-        "type": "customNode",
-        "data": {
-          "id": "ltv",
-          "label": "LTV",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "LTV",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "ltv-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "ltv-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "ltv-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "ltv-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "ltv",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"LTV\",\n  role: \"visual_result_only\",\n  backend_owner: \"FastAPI\",\n  value: input.ltv || input.policy_score?.ltv || input.input?.ltv || null,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "ltv-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 3480,
-          "y": 700
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "interest_rate",
-        "position": {
-          "x": 3860,
-          "y": 700
-        },
-        "type": "customNode",
-        "data": {
-          "id": "interest_rate",
-          "label": "Interest Rate",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Interest Rate",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "interest_rate-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "interest_rate-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "interest_rate-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "interest_rate-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "interest_rate",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Interest Rate\",\n  role: \"visual_result_only\",\n  backend_owner: \"FastAPI\",\n  value: input.interest_rate || input.policy_score?.interest_rate || input.input?.interest_rate || null,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "interest_rate-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 3860,
-          "y": 700
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "monthly_payment",
-        "position": {
-          "x": 4240,
-          "y": 700
-        },
-        "type": "customNode",
-        "data": {
-          "id": "monthly_payment",
-          "label": "Monthly Payment",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Monthly Payment",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "monthly_payment-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "monthly_payment-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "monthly_payment-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "monthly_payment-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "monthly_payment",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Monthly Payment\",\n  role: \"visual_result_only\",\n  backend_owner: \"FastAPI\",\n  value: input.monthly_payment || input.policy_score?.monthly_payment || input.input?.monthly_payment || null,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "monthly_payment-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 4240,
-          "y": 700
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "recommendation",
-        "position": {
-          "x": 4620,
-          "y": 700
-        },
-        "type": "customNode",
-        "data": {
-          "id": "recommendation",
-          "label": "Recommendation",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Recommendation",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "recommendation-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "recommendation-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "recommendation-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "recommendation-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "recommendation",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Recommendation\",\n  role: \"visual_result_only\",\n  backend_owner: \"FastAPI\",\n  value: input.recommendation || input.policy_score?.recommendation || input.input?.recommendation || null,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "recommendation-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 4620,
-          "y": 700
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "approval_committee",
-        "position": {
-          "x": 3480,
-          "y": 260
-        },
-        "type": "customNode",
-        "data": {
-          "id": "approval_committee",
-          "label": "Approval Committee",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Approval Committee",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "approval_committee-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "approval_committee-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "approval_committee-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "approval_committee-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "approval_committee",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Approval Committee\",\n  role: \"http_call_or_status\",\n  backend_owner: \"FastAPI\",\n  method: \"POST\",\n  endpoint: \"http://host.docker.internal:8000/approval-committee/submit\",\n  human_review_required: true,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "approval_committee-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 3480,
-          "y": 260
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "final_decision",
-        "position": {
-          "x": 3860,
-          "y": 260
-        },
-        "type": "customNode",
-        "data": {
-          "id": "final_decision",
-          "label": "Final Decision",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Final Decision",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "final_decision-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "final_decision-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "final_decision-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "final_decision-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "final_decision",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Final Decision\",\n  role: \"http_call_or_status\",\n  backend_owner: \"FastAPI\",\n  method: \"POST\",\n  endpoint: \"http://host.docker.internal:8000/final-decision\",\n  human_review_required: true,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "final_decision-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 3860,
-          "y": 260
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "customer_email_draft",
-        "position": {
-          "x": 4240,
-          "y": 260
-        },
-        "type": "customNode",
-        "data": {
-          "id": "customer_email_draft",
-          "label": "Customer Email Draft",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Customer Email Draft",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "customer_email_draft-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "customer_email_draft-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "customer_email_draft-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "customer_email_draft-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "customer_email_draft",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Customer Email Draft\",\n  role: \"http_call_or_status\",\n  backend_owner: \"FastAPI\",\n  method: \"POST\",\n  endpoint: \"http://host.docker.internal:8000/customer-decision-email/draft\",\n  human_review_required: true,\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "customer_email_draft-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 4240,
-          "y": 260
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "audit_logging",
-        "position": {
-          "x": 4620,
-          "y": 260
-        },
-        "type": "customNode",
-        "data": {
-          "id": "audit_logging",
-          "label": "Audit Logging",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Audit Logging",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "audit_logging-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "audit_logging-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "audit_logging-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "audit_logging-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "audit_logging",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Audit Logging\",\n  role: \"http_call\",\n  backend_owner: \"FastAPI\",\n  method: \"POST\",\n  endpoint: \"http://host.docker.internal:8000/audit\",\n  body: {\n    customer_id: input.customer_id || \"demo_customer\",\n    session_id: input.session_id || \"demo_session\",\n    user_id: input.user_id || \"demo_user\",\n    workflow_id: \"6f946e8b-2d35-4fd4-9ff9-158db1f0b820\",\n    workflow_name: \"Docfactor Full Banking Workflow\",\n    question: input.question || \"\",\n    llm_provider: input.llm_provider || \"ollama\",\n    llm_model: input.llm_model || \"mistral\",\n    evidence_ids: (input.citations || []).map(c => c.chunk_id).filter(Boolean),\n    policy_score: input.policy_score || {},\n    final_answer: input.parsed_output || input,\n    human_review_required: true\n  },\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "audit_logging-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 4620,
-          "y": 260
+          "x": 3140,
+          "y": 240
         },
         "dragging": false
       },
@@ -2466,8 +1202,8 @@
         "height": 708,
         "id": "chat_output",
         "position": {
-          "x": 5000,
-          "y": 260
+          "x": 3540,
+          "y": 240
         },
         "type": "customNode",
         "data": {
@@ -2518,7 +1254,7 @@
           "inputs": {
             "functionInputVariables": "{}",
             "functionName": "chat_output",
-            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Chat Output\",\n  answer: input.raw_answer || input.answer || input.text || input,\n  human_review_required: true\n};"
+            "javascriptFunction": "const input = $input || {};\nreturn {\n  component: \"Chat Output\",\n  role: \"flowise_managed\",\n  answer: input.raw_answer || input.answer || input.text || input,\n  human_review_required: true,\n  footer: \"Human credit officer review required.\"\n};"
           },
           "outputAnchors": [
             {
@@ -2535,87 +1271,8 @@
         },
         "selected": false,
         "positionAbsolute": {
-          "x": 5000,
-          "y": 260
-        },
-        "dragging": false
-      },
-      {
-        "width": 300,
-        "height": 708,
-        "id": "document_status",
-        "position": {
-          "x": 720,
-          "y": 390
-        },
-        "type": "customNode",
-        "data": {
-          "id": "document_status",
-          "label": "Document Status",
-          "version": 3,
-          "name": "customFunction",
-          "type": "CustomFunction",
-          "baseClasses": [
-            "CustomFunction",
-            "Utilities"
-          ],
-          "category": "Utilities",
-          "description": "Document Status",
-          "inputParams": [
-            {
-              "label": "Input Variables",
-              "name": "functionInputVariables",
-              "type": "json",
-              "optional": true,
-              "acceptVariable": true,
-              "list": true,
-              "id": "document_status-input-functionInputVariables-json"
-            },
-            {
-              "label": "Function Name",
-              "name": "functionName",
-              "type": "string",
-              "optional": true,
-              "id": "document_status-input-functionName-string"
-            },
-            {
-              "label": "Javascript Function",
-              "name": "javascriptFunction",
-              "type": "code",
-              "id": "document_status-input-javascriptFunction-code"
-            }
-          ],
-          "inputAnchors": [
-            {
-              "label": "Input",
-              "name": "input",
-              "type": "string | number | boolean | json | array",
-              "optional": true,
-              "id": "document_status-input-input-string|number|boolean|json|array"
-            }
-          ],
-          "inputs": {
-            "functionInputVariables": "{}",
-            "functionName": "document_status",
-            "javascriptFunction": "const input = $input || {};\nconst documentId = input.document_id || input.id || null;\nreturn {\n  component: \"Document Status\",\n  role: \"http_call_or_status\",\n  backend_owner: \"FastAPI\",\n  method: \"GET\",\n  endpoint: documentId ? `http://host.docker.internal:8000/documents/${documentId}/status` : null,\n  expected_response: {\n    ingestion_status: {\n      parser: \"pending|complete|failed\",\n      chunker: \"pending|complete|failed\",\n      embeddings: \"pending|complete|failed\",\n      postgresql: \"pending|complete|failed\",\n      pgvector: \"pending|complete|failed\"\n    }\n  },\n  input\n};"
-          },
-          "outputAnchors": [
-            {
-              "id": "document_status-output-output-string|number|boolean|json|array",
-              "name": "output",
-              "label": "Output",
-              "type": "string | number | boolean | json | array"
-            }
-          ],
-          "outputs": {
-            "output": "output"
-          },
-          "selected": false
-        },
-        "selected": false,
-        "positionAbsolute": {
-          "x": 720,
-          "y": 760
+          "x": 3540,
+          "y": 240
         },
         "dragging": false
       }
@@ -2632,328 +1289,120 @@
       {
         "source": "runtime_vars",
         "sourceHandle": "runtime_vars-output-output-string|number|boolean|json|array",
+        "target": "workflow_config",
+        "targetHandle": "workflow_config-input-input-string|number|boolean|json|array",
+        "type": "buttonedge",
+        "id": "runtime_vars-runtime_vars-output-output-string|number|boolean|json|array-workflow_config-workflow_config-input-input-string|number|boolean|json|array"
+      },
+      {
+        "source": "workflow_config",
+        "sourceHandle": "workflow_config-output-output-string|number|boolean|json|array",
         "target": "document_upload",
         "targetHandle": "document_upload-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "runtime_vars-runtime_vars-output-output-string|number|boolean|json|array-document_upload-document_upload-input-input-string|number|boolean|json|array"
+        "id": "workflow_config-workflow_config-output-output-string|number|boolean|json|array-document_upload-document_upload-input-input-string|number|boolean|json|array"
       },
       {
         "source": "document_upload",
         "sourceHandle": "document_upload-output-output-string|number|boolean|json|array",
-        "target": "document_status",
-        "targetHandle": "document_status-input-input-string|number|boolean|json|array",
+        "target": "fastapi_ingestion_stages",
+        "targetHandle": "fastapi_ingestion_stages-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "document_upload-document_upload-output-output-string|number|boolean|json|array-document_status-document_status-input-input-string|number|boolean|json|array"
+        "id": "document_upload-document_upload-output-output-string|number|boolean|json|array-fastapi_ingestion_stages-fastapi_ingestion_stages-input-input-string|number|boolean|json|array"
       },
       {
-        "source": "document_status",
-        "sourceHandle": "document_status-output-output-string|number|boolean|json|array",
-        "target": "parser",
-        "targetHandle": "parser-input-input-string|number|boolean|json|array",
+        "source": "workflow_config",
+        "sourceHandle": "workflow_config-output-output-string|number|boolean|json|array",
+        "target": "fastapi_retrieval_stages",
+        "targetHandle": "fastapi_retrieval_stages-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "document_status-document_status-output-output-string|number|boolean|json|array-parser-parser-input-input-string|number|boolean|json|array"
+        "id": "workflow_config-workflow_config-output-output-string|number|boolean|json|array-fastapi_retrieval_stages-fastapi_retrieval_stages-input-input-string|number|boolean|json|array"
       },
       {
-        "source": "parser",
-        "sourceHandle": "parser-output-output-string|number|boolean|json|array",
-        "target": "chunker",
-        "targetHandle": "chunker-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "parser-parser-output-output-string|number|boolean|json|array-chunker-chunker-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "chunker",
-        "sourceHandle": "chunker-output-output-string|number|boolean|json|array",
-        "target": "embeddings",
-        "targetHandle": "embeddings-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "chunker-chunker-output-output-string|number|boolean|json|array-embeddings-embeddings-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "embeddings",
-        "sourceHandle": "embeddings-output-output-string|number|boolean|json|array",
-        "target": "postgresql",
-        "targetHandle": "postgresql-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "embeddings-embeddings-output-output-string|number|boolean|json|array-postgresql-postgresql-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "postgresql",
-        "sourceHandle": "postgresql-output-output-string|number|boolean|json|array",
-        "target": "pgvector",
-        "targetHandle": "pgvector-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "postgresql-postgresql-output-output-string|number|boolean|json|array-pgvector-pgvector-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "pgvector",
-        "sourceHandle": "pgvector-output-output-string|number|boolean|json|array",
-        "target": "http_retrieval_tool",
-        "targetHandle": "http_retrieval_tool-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "pgvector-pgvector-output-output-string|number|boolean|json|array-http_retrieval_tool-http_retrieval_tool-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "http_retrieval_tool",
-        "sourceHandle": "http_retrieval_tool-output-output-string|number|boolean|json|array",
-        "target": "retriever",
-        "targetHandle": "retriever-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "http_retrieval_tool-http_retrieval_tool-output-output-string|number|boolean|json|array-retriever-retriever-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "retriever",
-        "sourceHandle": "retriever-output-output-string|number|boolean|json|array",
+        "source": "fastapi_retrieval_stages",
+        "sourceHandle": "fastapi_retrieval_stages-output-output-string|number|boolean|json|array",
         "target": "citation_builder",
         "targetHandle": "citation_builder-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "retriever-retriever-output-output-string|number|boolean|json|array-citation_builder-citation_builder-input-input-string|number|boolean|json|array"
+        "id": "fastapi_retrieval_stages-fastapi_retrieval_stages-output-output-string|number|boolean|json|array-citation_builder-citation_builder-input-input-string|number|boolean|json|array"
       },
       {
         "source": "citation_builder",
         "sourceHandle": "citation_builder-output-output-string|number|boolean|json|array",
-        "target": "loan_policy_scoring",
-        "targetHandle": "loan_policy_scoring-input-input-string|number|boolean|json|array",
+        "target": "fastapi_policy_stages",
+        "targetHandle": "fastapi_policy_stages-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "citation_builder-citation_builder-output-output-string|number|boolean|json|array-loan_policy_scoring-loan_policy_scoring-input-input-string|number|boolean|json|array"
+        "id": "citation_builder-citation_builder-output-output-string|number|boolean|json|array-fastapi_policy_stages-fastapi_policy_stages-input-input-string|number|boolean|json|array"
       },
       {
-        "source": "loan_policy_scoring",
-        "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
-        "target": "dti",
-        "targetHandle": "dti-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-dti-dti-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "loan_policy_scoring",
-        "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
-        "target": "ltv",
-        "targetHandle": "ltv-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-ltv-ltv-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "loan_policy_scoring",
-        "sourceHandle": "loan_policy_scoring-output-output-string|number|boolean|json|array",
-        "target": "interest_rate",
-        "targetHandle": "interest_rate-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "loan_policy_scoring-loan_policy_scoring-output-output-string|number|boolean|json|array-interest_rate-interest_rate-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "interest_rate",
-        "sourceHandle": "interest_rate-output-output-string|number|boolean|json|array",
-        "target": "monthly_payment",
-        "targetHandle": "monthly_payment-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "interest_rate-interest_rate-output-output-string|number|boolean|json|array-monthly_payment-monthly_payment-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "dti",
-        "sourceHandle": "dti-output-output-string|number|boolean|json|array",
-        "target": "recommendation",
-        "targetHandle": "recommendation-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "dti-dti-output-output-string|number|boolean|json|array-recommendation-recommendation-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "ltv",
-        "sourceHandle": "ltv-output-output-string|number|boolean|json|array",
-        "target": "recommendation",
-        "targetHandle": "recommendation-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "ltv-ltv-output-output-string|number|boolean|json|array-recommendation-recommendation-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "monthly_payment",
-        "sourceHandle": "monthly_payment-output-output-string|number|boolean|json|array",
-        "target": "recommendation",
-        "targetHandle": "recommendation-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "monthly_payment-monthly_payment-output-output-string|number|boolean|json|array-recommendation-recommendation-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "recommendation",
-        "sourceHandle": "recommendation-output-output-string|number|boolean|json|array",
+        "source": "fastapi_policy_stages",
+        "sourceHandle": "fastapi_policy_stages-output-output-string|number|boolean|json|array",
         "target": "prompt_template",
         "targetHandle": "prompt_template-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "recommendation-recommendation-output-output-string|number|boolean|json|array-prompt_template-prompt_template-input-input-string|number|boolean|json|array"
+        "id": "fastapi_policy_stages-fastapi_policy_stages-output-output-string|number|boolean|json|array-prompt_template-prompt_template-input-input-string|number|boolean|json|array"
       },
       {
-        "source": "citation_builder",
-        "sourceHandle": "citation_builder-output-output-string|number|boolean|json|array",
-        "target": "prompt_template",
-        "targetHandle": "prompt_template-input-input-string|number|boolean|json|array",
+        "source": "selected_llm_model",
+        "sourceHandle": "selected_llm_model-output-chatOllama-ChatOllama|BaseChatModel|BaseLanguageModel|Runnable",
+        "target": "llm_chain",
+        "targetHandle": "llm_chain-input-model-BaseLanguageModel",
         "type": "buttonedge",
-        "id": "citation_builder-citation_builder-output-output-string|number|boolean|json|array-prompt_template-prompt_template-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "runtime_vars",
-        "sourceHandle": "runtime_vars-output-output-string|number|boolean|json|array",
-        "target": "prompt_template",
-        "targetHandle": "prompt_template-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "runtime_vars-runtime_vars-output-output-string|number|boolean|json|array-prompt_template-prompt_template-input-input-string|number|boolean|json|array"
+        "id": "selected_llm_model-selected_llm_model-output-chatOllama-ChatOllama|BaseChatModel|BaseLanguageModel|Runnable-llm_chain-llm_chain-input-model-BaseLanguageModel"
       },
       {
         "source": "prompt_template",
-        "sourceHandle": "prompt_template-output-output-string|number|boolean|json|array",
+        "sourceHandle": "prompt_template-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate",
         "target": "llm_chain",
-        "targetHandle": "llm_chain-input-input-string|number|boolean|json|array",
+        "targetHandle": "llm_chain-input-prompt-BasePromptTemplate",
         "type": "buttonedge",
-        "id": "prompt_template-prompt_template-output-output-string|number|boolean|json|array-llm_chain-llm_chain-input-input-string|number|boolean|json|array"
+        "id": "prompt_template-prompt_template-output-promptTemplate-PromptTemplate|BaseStringPromptTemplate|BasePromptTemplate-llm_chain-llm_chain-input-prompt-BasePromptTemplate"
       },
       {
-        "source": "runtime_vars",
-        "sourceHandle": "runtime_vars-output-output-string|number|boolean|json|array",
+        "source": "workflow_config",
+        "sourceHandle": "workflow_config-output-output-string|number|boolean|json|array",
         "target": "llm_router",
         "targetHandle": "llm_router-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "runtime_vars-runtime_vars-output-output-string|number|boolean|json|array-llm_router-llm_router-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "llm_router",
-        "sourceHandle": "llm_router-output-output-string|number|boolean|json|array",
-        "target": "ollama_mistral",
-        "targetHandle": "ollama_mistral-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "llm_router-llm_router-output-output-string|number|boolean|json|array-ollama_mistral-ollama_mistral-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "llm_router",
-        "sourceHandle": "llm_router-output-output-string|number|boolean|json|array",
-        "target": "ollama_gemma",
-        "targetHandle": "ollama_gemma-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "llm_router-llm_router-output-output-string|number|boolean|json|array-ollama_gemma-ollama_gemma-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "llm_router",
-        "sourceHandle": "llm_router-output-output-string|number|boolean|json|array",
-        "target": "openai_provider",
-        "targetHandle": "openai_provider-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "llm_router-llm_router-output-output-string|number|boolean|json|array-openai_provider-openai_provider-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "llm_router",
-        "sourceHandle": "llm_router-output-output-string|number|boolean|json|array",
-        "target": "deepseek_provider",
-        "targetHandle": "deepseek_provider-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "llm_router-llm_router-output-output-string|number|boolean|json|array-deepseek_provider-deepseek_provider-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "llm_router",
-        "sourceHandle": "llm_router-output-output-string|number|boolean|json|array",
-        "target": "custom_provider",
-        "targetHandle": "custom_provider-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "llm_router-llm_router-output-output-string|number|boolean|json|array-custom_provider-custom_provider-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "ollama_mistral",
-        "sourceHandle": "ollama_mistral-output-output-string|number|boolean|json|array",
-        "target": "llm_chain",
-        "targetHandle": "llm_chain-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "ollama_mistral-ollama_mistral-output-output-string|number|boolean|json|array-llm_chain-llm_chain-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "ollama_gemma",
-        "sourceHandle": "ollama_gemma-output-output-string|number|boolean|json|array",
-        "target": "llm_chain",
-        "targetHandle": "llm_chain-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "ollama_gemma-ollama_gemma-output-output-string|number|boolean|json|array-llm_chain-llm_chain-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "openai_provider",
-        "sourceHandle": "openai_provider-output-output-string|number|boolean|json|array",
-        "target": "llm_chain",
-        "targetHandle": "llm_chain-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "openai_provider-openai_provider-output-output-string|number|boolean|json|array-llm_chain-llm_chain-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "deepseek_provider",
-        "sourceHandle": "deepseek_provider-output-output-string|number|boolean|json|array",
-        "target": "llm_chain",
-        "targetHandle": "llm_chain-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "deepseek_provider-deepseek_provider-output-output-string|number|boolean|json|array-llm_chain-llm_chain-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "custom_provider",
-        "sourceHandle": "custom_provider-output-output-string|number|boolean|json|array",
-        "target": "llm_chain",
-        "targetHandle": "llm_chain-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "custom_provider-custom_provider-output-output-string|number|boolean|json|array-llm_chain-llm_chain-input-input-string|number|boolean|json|array"
+        "id": "workflow_config-workflow_config-output-output-string|number|boolean|json|array-llm_router-llm_router-input-input-string|number|boolean|json|array"
       },
       {
         "source": "llm_chain",
-        "sourceHandle": "llm_chain-output-output-string|number|boolean|json|array",
+        "sourceHandle": "llm_chain-output-outputPrediction-string|json",
         "target": "output_parser",
         "targetHandle": "output_parser-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "llm_chain-llm_chain-output-output-string|number|boolean|json|array-output_parser-output_parser-input-input-string|number|boolean|json|array"
+        "id": "llm_chain-llm_chain-output-outputPrediction-string|json-output_parser-output_parser-input-input-string|number|boolean|json|array"
       },
       {
         "source": "output_parser",
         "sourceHandle": "output_parser-output-output-string|number|boolean|json|array",
-        "target": "credit_assessment",
-        "targetHandle": "credit_assessment-input-input-string|number|boolean|json|array",
+        "target": "fastapi_human_workflow_stages",
+        "targetHandle": "fastapi_human_workflow_stages-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "output_parser-output_parser-output-output-string|number|boolean|json|array-credit_assessment-credit_assessment-input-input-string|number|boolean|json|array"
+        "id": "output_parser-output_parser-output-output-string|number|boolean|json|array-fastapi_human_workflow_stages-fastapi_human_workflow_stages-input-input-string|number|boolean|json|array"
       },
       {
-        "source": "credit_assessment",
-        "sourceHandle": "credit_assessment-output-output-string|number|boolean|json|array",
-        "target": "approval_committee",
-        "targetHandle": "approval_committee-input-input-string|number|boolean|json|array",
+        "source": "output_parser",
+        "sourceHandle": "output_parser-output-output-string|number|boolean|json|array",
+        "target": "fastapi_audit_stage",
+        "targetHandle": "fastapi_audit_stage-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "credit_assessment-credit_assessment-output-output-string|number|boolean|json|array-approval_committee-approval_committee-input-input-string|number|boolean|json|array"
+        "id": "output_parser-output_parser-output-output-string|number|boolean|json|array-fastapi_audit_stage-fastapi_audit_stage-input-input-string|number|boolean|json|array"
       },
       {
-        "source": "approval_committee",
-        "sourceHandle": "approval_committee-output-output-string|number|boolean|json|array",
-        "target": "final_decision",
-        "targetHandle": "final_decision-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "approval_committee-approval_committee-output-output-string|number|boolean|json|array-final_decision-final_decision-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "final_decision",
-        "sourceHandle": "final_decision-output-output-string|number|boolean|json|array",
-        "target": "customer_email_draft",
-        "targetHandle": "customer_email_draft-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "final_decision-final_decision-output-output-string|number|boolean|json|array-customer_email_draft-customer_email_draft-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "customer_email_draft",
-        "sourceHandle": "customer_email_draft-output-output-string|number|boolean|json|array",
-        "target": "audit_logging",
-        "targetHandle": "audit_logging-input-input-string|number|boolean|json|array",
-        "type": "buttonedge",
-        "id": "customer_email_draft-customer_email_draft-output-output-string|number|boolean|json|array-audit_logging-audit_logging-input-input-string|number|boolean|json|array"
-      },
-      {
-        "source": "audit_logging",
-        "sourceHandle": "audit_logging-output-output-string|number|boolean|json|array",
+        "source": "fastapi_audit_stage",
+        "sourceHandle": "fastapi_audit_stage-output-output-string|number|boolean|json|array",
         "target": "chat_output",
         "targetHandle": "chat_output-input-input-string|number|boolean|json|array",
         "type": "buttonedge",
-        "id": "audit_logging-audit_logging-output-output-string|number|boolean|json|array-chat_output-chat_output-input-input-string|number|boolean|json|array"
+        "id": "fastapi_audit_stage-fastapi_audit_stage-output-output-string|number|boolean|json|array-chat_output-chat_output-input-input-string|number|boolean|json|array"
       }
     ],
     "viewport": {
-      "x": 271.73614190687385,
-      "y": 399.46230598669626,
-      "zoom": 0.38010769718086784
+      "x": 0,
+      "y": 0,
+      "zoom": 0.6
     }
   }
 }

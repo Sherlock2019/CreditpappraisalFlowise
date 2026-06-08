@@ -5,6 +5,7 @@ const sqlite3 = require("../.tools/flowise-3.1.2/node_modules/sqlite3");
 const FLOW_ID = "6f946e8b-2d35-4fd4-9ff9-158db1f0b820";
 const root = path.join(__dirname, "..");
 const dbPath = path.join(root, "bank-credit-ai-poc", "flowise", ".flowise", "database.sqlite");
+const chatflowPath = path.join(root, "flowise_project", "generated", "live-flowise-chatflow-from-db.json");
 const flowDataPath = path.join(root, "flowise_project", "generated", "live-flowise-flowdata-from-db.json");
 
 function timestamp() {
@@ -26,6 +27,25 @@ if (!Array.isArray(flowData.nodes) || !Array.isArray(flowData.edges)) {
   throw new Error(`${flowDataPath} does not contain a valid Flowise flowData graph`);
 }
 
+let chatflow = {};
+if (fs.existsSync(chatflowPath)) {
+  chatflow = JSON.parse(fs.readFileSync(chatflowPath, "utf8"));
+}
+
+const flowName = chatflow.name || "Docfactor Full Banking Workflow";
+const deployed = chatflow.deployed === undefined ? true : Boolean(chatflow.deployed);
+const isPublic = chatflow.isPublic === undefined ? true : Boolean(chatflow.isPublic);
+const apiConfig = JSON.stringify(chatflow.apiConfig || { overrideConfig: true });
+const chatbotConfig = JSON.stringify(chatflow.chatbotConfig || {
+  starterPrompts: [
+    "Summarize this customer's credit risk.",
+    "What documents are missing for a complete credit review?",
+    "Give me a preliminary risk level with citations.",
+  ],
+});
+const category = chatflow.category || "Banking Credit Appraisal";
+const type = chatflow.type || "CHATFLOW";
+
 const backupPath = `${dbPath}.backup-${Date.now()}`;
 fs.copyFileSync(dbPath, backupPath);
 
@@ -38,16 +58,17 @@ db.serialize(() => {
       db.close();
       return;
     }
-    if (!row) {
-      console.error(`No chat_flow row found for ${FLOW_ID}`);
-      process.exitCode = 1;
-      db.close();
-      return;
-    }
+    const now = timestamp();
+    const sql = row
+      ? "update chat_flow set name = ?, flowData = ?, deployed = ?, isPublic = ?, chatbotConfig = ?, apiConfig = ?, category = ?, type = ?, updatedDate = ? where id = ?"
+      : "insert into chat_flow (name, flowData, deployed, isPublic, chatbotConfig, apiConfig, category, type, createdDate, updatedDate, id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    const params = row
+      ? [flowName, JSON.stringify(flowData), deployed, isPublic, chatbotConfig, apiConfig, category, type, now, FLOW_ID]
+      : [flowName, JSON.stringify(flowData), deployed, isPublic, chatbotConfig, apiConfig, category, type, now, now, FLOW_ID];
 
     db.run(
-      "update chat_flow set flowData = ?, updatedDate = ? where id = ?",
-      [JSON.stringify(flowData), timestamp(), FLOW_ID],
+      sql,
+      params,
       function updateFlow(updateError) {
         if (updateError) {
           console.error(updateError);
@@ -55,8 +76,9 @@ db.serialize(() => {
         } else {
           console.log(JSON.stringify({
             flow_id: FLOW_ID,
-            name: row.name,
-            updated_rows: this.changes,
+            name: flowName,
+            operation: row ? "updated" : "inserted",
+            changed_rows: this.changes,
             nodes: flowData.nodes.length,
             edges: flowData.edges.length,
             backup: backupPath,

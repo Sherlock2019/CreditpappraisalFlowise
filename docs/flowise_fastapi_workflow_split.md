@@ -56,41 +56,26 @@ Runtime variables:
 
 ## Workflow Stage Table
 
-| Order | Stage / Element | Owner | Task | Relationship |
-| --- | --- | --- | --- | --- |
-| 1 | `chat_input` | Flowise | Receives the user question. | Sends raw question to `runtime_vars`. |
-| 2 | `runtime_vars` | Flowise | Normalizes `customer_id`, `session_id`, `user_id`, `language`, `llm_provider`, `llm_model`, `policy_mode`, and `question`. | Feeds document upload, prompt, and LLM router. |
-| 3 | `document_upload` | FastAPI via Flowise | Represents `POST /documents/upload` with customer/session/source/file metadata. | Routes to `document_status`. |
-| 4 | `document_status` | FastAPI via Flowise | Represents `GET /documents/{document_id}/status`. | Routes backend ingestion state to parser/checkpoint visuals. |
-| 5 | `parser` | FastAPI | Tracks parse status. | Receives status from `document_status`, routes to `chunker`. |
-| 6 | `chunker` | FastAPI | Tracks chunking status. | Routes to `embeddings`. |
-| 7 | `embeddings` | FastAPI | Tracks embedding generation status. | Routes to `postgresql`. |
-| 8 | `postgresql` | FastAPI | Tracks document/chunk persistence. | Routes to `pgvector`. |
-| 9 | `pgvector` | FastAPI | Tracks vector index readiness. | Routes to retrieval call. |
-| 10 | `http_retrieval_tool` | FastAPI via Flowise | Represents `POST /retrieval/query`. | Sends customer/session/question/top_k/filters to backend retrieval. |
-| 11 | `retriever` | FastAPI | Displays retrieved evidence count and retrieval status. | Routes to citation builder. |
-| 12 | `citation_builder` | Flowise | Converts backend evidence into citation objects and citation text. | Feeds prompt and loan policy scoring. |
-| 13 | `loan_policy_scoring` | FastAPI via Flowise | Represents `POST /loan-policy/score`. | Feeds DTI, LTV, rate, payment, and recommendation visual nodes. |
-| 14 | `dti` | FastAPI | Displays DTI result from policy scoring. | Feeds recommendation. |
-| 15 | `ltv` | FastAPI | Displays LTV result from policy scoring. | Feeds recommendation. |
-| 16 | `interest_rate` | FastAPI | Displays selected/calculated interest rate. | Feeds monthly payment. |
-| 17 | `monthly_payment` | FastAPI | Displays estimated monthly payment. | Feeds recommendation. |
-| 18 | `recommendation` | FastAPI | Displays policy recommendation and breaches. | Feeds prompt. |
-| 19 | `prompt_template` | Flowise | Builds LISA prompt from evidence, citations, policy score, runtime vars, and human-review rule. | Feeds LLM chain. |
-| 20 | `llm_router` | Flowise | Selects one provider from runtime variables. | Routes to provider options. |
-| 21 | `ollama_mistral` | Flowise | Ollama provider option. | Feeds LLM chain only when selected. |
-| 22 | `ollama_gemma` | Flowise | Ollama local model option using runtime `llm_model`. | Feeds LLM chain only when selected. |
-| 23 | `openai_provider` | Flowise | OpenAI provider option using environment credentials. | Feeds LLM chain only when selected. |
-| 24 | `deepseek_provider` | Flowise | DeepSeek provider option using environment credentials. | Feeds LLM chain only when selected. |
-| 25 | `custom_provider` | Flowise | Custom provider option using environment configuration. | Feeds LLM chain only when selected. |
-| 26 | `llm_chain` | Flowise | Runs the selected LLM against the LISA prompt. | Routes answer to parser. |
-| 27 | `output_parser` | Flowise | Shapes raw LLM output into the expected decision-support sections. | Routes to credit assessment. |
-| 28 | `credit_assessment` | Flowise | Marks answer as decision support and human-review required. | Routes to committee stage. |
-| 29 | `approval_committee` | FastAPI via Flowise | Represents committee case submission. | Routes to final decision. |
-| 30 | `final_decision` | FastAPI via Flowise | Records human decision only; LLM cannot make final decision. | Routes to email draft. |
-| 31 | `customer_email_draft` | FastAPI via Flowise | Drafts customer notification from the decision state. | Routes to audit logging. |
-| 32 | `audit_logging` | FastAPI via Flowise | Represents `POST /audit`. | Routes to final chat output after logging. |
-| 33 | `chat_output` | Flowise | Displays answer to user. | Terminal stage. |
+| # | Workflow area | Should appear in Flowise? | Flowise responsibility | FastAPI responsibility | Node type in Flowise |
+| -: | --- | --- | --- | --- | --- |
+| 1 | Chat Input | Yes | Receive user question | N/A | Native/chat input node |
+| 2 | Runtime Variables | Yes | Pass `customer_id`, `llm_provider`, `llm_model`, language, session context | Validate customer/session permissions | Custom function / variables node |
+| 3 | Document Upload | Yes | Trigger/upload document from chat UI or workflow | Validate file, store file, create document record | HTTP call to `/documents/upload` |
+| 4 | Parser | Yes | Show parser stage in the Flowise workflow | Extract text from PDF, DOCX, image, Excel, CSV | HTTP call / backend pipeline status node |
+| 5 | Chunker | Yes | Show chunking stage in the workflow | Split text into searchable chunks | HTTP call / backend pipeline status node |
+| 6 | Embeddings | Yes | Trigger embedding generation or show status | Generate embeddings, store embedding model/version | HTTP call / backend pipeline status node |
+| 7 | PostgreSQL | Yes, as storage stage | Show where customer/document data is stored | Store customers, docs, chunks, audit logs, decisions | Visual/storage reference node |
+| 8 | pgvector | Yes, as vector index stage | Show vector-search storage layer | Store/search embeddings inside PostgreSQL | Visual/storage reference node |
+| 9 | Retrieval | Yes | Call `/retrieval/query` and receive relevant evidence | Search PostgreSQL/pgvector with customer filter | HTTP retrieval node |
+| 10 | Citation Builder | Yes | Format retrieved chunks into citation-ready evidence | Return filename, page, source metadata | Custom function node |
+| 11 | Prompt Template | Yes | Build final LISA prompt with evidence, policy, missing data | Optionally return policy context | Prompt template node |
+| 12 | LLM Router | Yes | Select local/public model route | Store available provider config/API keys if needed | Router/custom function node |
+| 13 | Ollama Local Model | Yes | Run selected local model through Flowise | Ensure Ollama service/model is running | ChatOllama node |
+| 14 | OpenAI | Yes | Provider option only | Secure API key/config | Provider node |
+| 15 | DeepSeek | Yes | Provider option only | Secure API key/config | Provider/custom API node |
+| 16 | Custom API | Yes | OpenAI-compatible provider option | Secure endpoint/key/config | Provider/custom API node |
+| 17 | LLM Chain | Yes | Execute prompt + selected model | N/A | LLM Chain node |
+| 18 | Output Parser | Yes | Structure LISA response | Optionally validate JSON schema | Output parser node |
 
 ## Backend Compatibility Notes
 

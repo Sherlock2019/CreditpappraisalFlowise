@@ -130,6 +130,13 @@ function selectedUploadFiles() {
   ];
 }
 
+function clearUploadInputs() {
+  for (const id of ["fileInput", "folderInput", "documentFileInput"]) {
+    const input = $(id);
+    if (input) input.value = "";
+  }
+}
+
 function uploadDisplayName(file) {
   return file.webkitRelativePath || file.name;
 }
@@ -142,12 +149,63 @@ function syntheticCustomerCode(value) {
   return String(value || "").match(/\bCUST-\d{3,}\b/i)?.[0]?.toUpperCase() || "";
 }
 
-function validateSyntheticFolderUpload(files, customerId) {
-  const targetCode = `CUST-${String(customerId).padStart(3, "0")}`;
-  const codes = new Set(files.map((file) => syntheticCustomerCode(uploadDisplayName(file))).filter(Boolean));
-  if (!codes.size) return "";
-  if (codes.size === 1 && codes.has(targetCode)) return "";
-  return "";
+function syntheticCustomerId(value) {
+  const match = String(value || "").match(/\bCUST-(\d{3,})\b/i);
+  return match ? Number(match[1]) : null;
+}
+
+function uploadRouteForFile(file, fallbackCustomerId = selectedCustomerId()) {
+  const parsedCustomerCode = syntheticCustomerCode(uploadDisplayName(file));
+  return parsedCustomerCode || fallbackCustomerId || null;
+}
+
+function scanUploadFiles(files = selectedUploadFiles(), fallbackCustomerId = selectedCustomerId()) {
+  const groups = new Map();
+  const unsupported = [];
+  const unrouted = [];
+  const parsedCustomerCodes = new Set();
+
+  for (const file of files) {
+    const displayName = uploadDisplayName(file);
+    const parsedCustomerCode = syntheticCustomerCode(displayName);
+    const customerId = parsedCustomerCode || fallbackCustomerId || null;
+    const supported = SUPPORTED_UPLOAD_SUFFIXES.some((suffix) => file.name.toLowerCase().endsWith(suffix));
+
+    if (parsedCustomerCode) parsedCustomerCodes.add(parsedCustomerCode);
+    if (!supported) unsupported.push(displayName);
+    if (!customerId) unrouted.push(displayName);
+    if (customerId) groups.set(customerId, (groups.get(customerId) || 0) + 1);
+  }
+
+  return {
+    files,
+    groups,
+    unsupported,
+    unrouted,
+    parsedCustomerCodes,
+  };
+}
+
+function uploadScanSummary(scan = scanUploadFiles()) {
+  if (!scan.files.length) return "Choose files or a folder to scan before upload.";
+  const routeSummary = [...scan.groups.entries()]
+    .sort(([left], [right]) => String(left).localeCompare(String(right), undefined, { numeric: true }))
+    .map(([customerId, count]) => `customer ${customerId}: ${count}`)
+    .join(", ");
+  const pieces = [
+    `Dry-run scan: ${scan.files.length} file${scan.files.length === 1 ? "" : "s"}`,
+    routeSummary ? `routes ${routeSummary}` : "no customer route found",
+  ];
+  if (scan.parsedCustomerCodes.size) pieces.push(`${scan.parsedCustomerCodes.size} customer code${scan.parsedCustomerCodes.size === 1 ? "" : "s"} parsed from file/folder names`);
+  if (scan.unsupported.length) pieces.push(`unsupported: ${scan.unsupported.slice(0, 4).join(", ")}${scan.unsupported.length > 4 ? "..." : ""}`);
+  if (scan.unrouted.length) pieces.push(`missing customer code: ${scan.unrouted.slice(0, 4).join(", ")}${scan.unrouted.length > 4 ? "..." : ""}`);
+  return `${pieces.join(". ")}.`;
+}
+
+function showUploadScan() {
+  const status = $("documentStatus");
+  if (!status) return;
+  status.textContent = uploadScanSummary(scanUploadFiles());
 }
 
 function activeSource() {
@@ -444,34 +502,28 @@ async function refreshCustomersPreservingSelection(selectId = "customerSelect") 
 async function loadDocuments(customerId = selectedCustomerId()) {
   const body = $("documentsBody");
   const summary = $("savedDocsSummary");
-  if ($("customerSelect")?.value === ALL_CUSTOMERS_VALUE) {
-    state.documents = [];
-    if (body) body.innerHTML = `<tr><td colspan="5">All customers selected. Choose one customer to manage documents.</td></tr>`;
-    if ($("metricDocuments")) $("metricDocuments").textContent = "--";
-    if (summary) summary.textContent = "All customers selected for general questions. Document upload is per customer.";
-    if ($("documentStatus")) $("documentStatus").textContent = "All customers selected for general questions. Choose a specific customer before uploading documents.";
-    renderStagePages();
-    return;
-  }
-  if (!customerId) {
+  const allCustomersSelected = $("customerSelect")?.value === ALL_CUSTOMERS_VALUE;
+  if (!customerId && !allCustomersSelected) {
     if (body) body.innerHTML = `<tr><td colspan="5">No customer selected.</td></tr>`;
     if ($("metricDocuments")) $("metricDocuments").textContent = "--";
     if (summary) summary.textContent = "Select a customer to load saved documents.";
     renderStagePages();
     return;
   }
-  state.documents = sortDocumentsByCustomerName(await api(`/documents?customer_id=${customerId}`));
+  const documentPath = allCustomersSelected ? "/documents" : `/documents?customer_id=${customerId}`;
+  const scopeLabel = allCustomersSelected ? "all customers" : `customer ${customerId}`;
+  state.documents = sortDocumentsByCustomerName(await api(documentPath));
   const ingestedCount = state.documents.filter((doc) => String(doc.status || "").toLowerCase() === "ingested").length;
   if ($("metricDocuments")) $("metricDocuments").textContent = String(state.documents.length);
   if ($("documentStatus")) {
     $("documentStatus").textContent = state.documents.length
-      ? `Loaded ${state.documents.length} saved documents for customer ${customerId}. ${ingestedCount} ingested.`
-      : `No saved documents found for customer ${customerId}. Upload files or click Recover saved.`;
+      ? `Loaded ${state.documents.length} saved documents for ${scopeLabel}. ${ingestedCount} ingested.`
+      : `No saved documents found for ${scopeLabel}. Upload a folder with CUST-### names or choose one customer.`;
   }
   if (summary) {
     summary.innerHTML = state.documents.length
       ? `<strong>${state.documents.length}</strong> saved documents loaded. <strong>${ingestedCount}</strong> ingested.`
-      : "No saved documents loaded for this customer.";
+      : `No saved documents loaded for ${scopeLabel}.`;
   }
   if (!body) return;
   body.innerHTML = state.documents.length
@@ -910,31 +962,32 @@ async function uploadDocuments() {
     await importConnectorDocuments();
     return;
   }
-  const customerId = selectedCustomerId();
+  const fallbackCustomerId = selectedCustomerId();
   const files = selectedUploadFiles();
   const status = $("documentStatus");
   const button = $("uploadBtn");
-  if (!customerId || !files.length) {
-    if (status) status.textContent = "Select a customer and choose at least one file.";
+  const scan = scanUploadFiles(files, fallbackCustomerId);
+  if (!files.length) {
+    if (status) status.textContent = "Choose at least one file or folder.";
     return;
   }
-  const syntheticUploadError = validateSyntheticFolderUpload(files, customerId);
-  if (syntheticUploadError) {
-    if (status) status.textContent = syntheticUploadError;
+  if (scan.unrouted.length) {
+    if (status) status.textContent = `Choose a specific customer, or upload a folder/files whose names include CUST-###. Missing route for: ${scan.unrouted.slice(0, 5).join(", ")}${scan.unrouted.length > 5 ? "..." : ""}`;
     return;
   }
-  const unsupported = files.filter((file) => !SUPPORTED_UPLOAD_SUFFIXES.some((suffix) => file.name.toLowerCase().endsWith(suffix)));
-  if (unsupported.length) {
-    if (status) status.textContent = `Unsupported file type: ${unsupported.map(uploadDisplayName).join(", ")}. Use PDF, TXT, CSV, XLS, XLSX, or DOCX.`;
+  if (scan.unsupported.length) {
+    if (status) status.textContent = `Unsupported file type: ${scan.unsupported.slice(0, 5).join(", ")}${scan.unsupported.length > 5 ? "..." : ""}. Use PDF, TXT, CSV, XLS, XLSX, or DOCX.`;
     return;
   }
   if (button) button.disabled = true;
   try {
     const uploadedDocs = [];
     const autoIngest = $("autoIngestInput")?.checked !== false;
+    if (status) status.textContent = uploadScanSummary(scan);
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index];
-      if (status) status.textContent = `Uploading ${index + 1}/${files.length}: ${uploadDisplayName(file)}`;
+      const customerId = uploadRouteForFile(file, fallbackCustomerId);
+      if (status) status.textContent = `Uploading ${index + 1}/${files.length} to customer ${customerId}: ${uploadDisplayName(file)}`;
       const form = new FormData();
       form.append("customer_id", String(customerId));
       form.append("document_type", $("documentType")?.value || "financial_statement");
@@ -963,12 +1016,11 @@ async function uploadDocuments() {
     } else if (status) {
       status.textContent = "Upload complete. Select a document below, then click Ingest selected.";
     }
-    $("fileInput").value = "";
-    $("folderInput").value = "";
+    clearUploadInputs();
     state.selectedDocumentIds = [];
     state.selectedDocumentId = null;
     await refreshCustomersPreservingSelection("customerSelect");
-    await loadDocuments(customerId);
+    await loadDocuments(selectedCustomerId());
   } catch (error) {
     if (status) status.textContent = `Upload failed: ${error.message}`;
   } finally {
@@ -1529,7 +1581,7 @@ async function testConnector() {
   const status = $("documentStatus");
   const source = $("sourceSelect")?.value || "manual_upload";
   if (source === "manual_upload") {
-    if (status) status.textContent = "Manual upload is ready. No external connector test needed.";
+    if (status) status.textContent = uploadScanSummary(scanUploadFiles());
     return;
   }
   try {
@@ -1593,6 +1645,8 @@ async function initCredit() {
     loadDocuments();
   });
   $("sourceSelect")?.addEventListener("change", renderSourceMethod);
+  $("fileInput")?.addEventListener("change", showUploadScan);
+  $("folderInput")?.addEventListener("change", showUploadScan);
   $("uploadBtn")?.addEventListener("click", uploadDocuments);
   $("ingestSelectedBtn")?.addEventListener("click", ingestSelectedDocument);
   $("recoverDocsBtn")?.addEventListener("click", recoverSavedDocuments);

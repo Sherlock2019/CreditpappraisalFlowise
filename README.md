@@ -1,103 +1,303 @@
-# HyperSpeed Credit Appraisal Flowise
+# HyperSpeed Banking AI Copilot
 
-Credit appraisal proof of concept with a custom credit loan officer UI, FastAPI backend, PostgreSQL/pgvector RAG, local Flowise orchestration, and selectable LLM routing.
+Ultra fast and reliable credit appraisal workspace powered by a focused credit-review UI, FastAPI, PostgreSQL/pgvector, Flowise, and local/public LLM routing.
 
-## Start
+The default app is the single credit appraisal page:
+
+`http://127.0.0.1:8080`
+
+It is designed for a loan officer workflow: create/select customers, upload credit documents, ingest evidence, ask LISA questions, score policy risk, prepare committee review, record final decision, draft customer email, and retain audit evidence.
+
+## What This Runs
+
+| Layer | Purpose | Default URL |
+| --- | --- | --- |
+| Credit Appraisal UI | Main browser app, served from `creditappflowise/` | `http://127.0.0.1:8080` |
+| FastAPI backend | Customers, uploads, ingestion, retrieval, policy scoring, workflow records | `http://127.0.0.1:8000` |
+| FastAPI Swagger | API explorer | `http://127.0.0.1:8000/docs` |
+| Flowise UI | Visual LISA orchestration workflow | `http://127.0.0.1:3001` |
+| PostgreSQL/pgvector | Customer/document/chunk/vector storage | `127.0.0.1:5432` |
+| Streamlit legacy UI | Older proof-of-concept UI | `http://127.0.0.1:8501` |
+
+## Quick Start
+
+Run everything from WSL/Ubuntu:
 
 ```bash
+cd /home/dzoan/docfactorFlowise
 ./start.sh
 ```
 
-Main URLs:
+`start.sh` now installs Python packages from:
 
-| Service | URL |
+- `bank-credit-ai-poc/backend/requirements.txt`
+- `bank-credit-ai-poc/frontend/requirements.txt`
+
+The install happens inside a local `.venv/` and is skipped on later starts until either requirements file changes.
+
+Common launcher options:
+
+```bash
+# Skip Python package install
+INSTALL_REQUIREMENTS=0 ./start.sh
+
+# Restart local Flowise before opening the app
+RESTART_LOCAL_FLOWISE=1 ./start.sh
+
+# Skip Docker stack if services are already running
+START_STACK=0 ./start.sh
+
+# Start Docker Flowise profile instead of local Flowise
+START_DOCKER_FLOWISE=1 ./start.sh
+
+# Do not open FastAPI Swagger automatically
+OPEN_FASTAPI=0 ./start.sh
+```
+
+The old full dashboard can still be launched with:
+
+```bash
+./startallagent.sh
+```
+
+## Main Page
+
+The main UI is intentionally focused on credit appraisal only.
+
+Important files:
+
+| File | Purpose |
 | --- | --- |
-| Credit Appraisal UI | `http://127.0.0.1:8080` |
-| Backend Swagger | `http://127.0.0.1:8000/docs` |
-| Flowise UI | `http://127.0.0.1:3001` |
-| Streamlit legacy UI | `http://127.0.0.1:8501` |
+| `creditappflowise/index.html` | Main credit appraisal page |
+| `creditappflowise/docfactor-ui.js` | App logic, uploads, customers, chat, workflow actions |
+| `creditappflowise/docfactor-ui.css` | Main UI styling and light/dark theme |
+| `creditappflowise/jarvis_british_speak.js` | Browser voice support |
+| `web_proxy.py` | Static UI server plus `/api` proxy to FastAPI |
+| `start.sh` | Primary launcher |
+| `startallagent.sh` | Legacy full-dashboard launcher |
 
-If Flowise is already running and you need it to reload the live SQLite workflow row:
+## Document Uploads And Customer Parsing
+
+The upload flow supports both individual files and folder uploads. Folder uploads preserve browser-relative paths and the UI parses customer codes from names like:
+
+```text
+customer_documents/CUST-011/CUST-011_tax_return_summary.pdf
+```
+
+Expected behavior:
+
+1. Select `All customers - general questions` or a specific customer.
+2. Choose files or a folder.
+3. The UI dry-runs the upload routes before sending.
+4. Files containing `CUST-###` are routed to that parsed customer code.
+5. FastAPI creates or finds the customer.
+6. If auto-ingest is enabled, the backend parses text and can rename generic `CUST-###` customers to borrower names found in the documents.
+7. The customer dropdown reloads from `/customers` after upload.
+
+Supported file types:
+
+`pdf`, `txt`, `csv`, `xlsx`, `xls`, `docx`, `png`, `jpg`, `jpeg`
+
+The backend upload router is:
+
+`bank-credit-ai-poc/backend/app/routers/documents.py`
+
+## LISA
+
+LISA is the visible loan insight analyst in the app:
+
+`ASK LISA - Your Ultra-Smart Loan Insight Analyst`
+
+LISA can answer customer-specific or all-customer questions using retrieved document evidence. Voice mode can read the submitted question and the answer when supported by the browser.
+
+LLM provider options are wired through the UI and backend:
+
+| Provider | Role |
+| --- | --- |
+| Local Ollama | Default local model route |
+| OpenAI | Public model route when configured |
+| DeepSeek | Public/provider route when configured |
+| Custom API | OpenAI-compatible endpoint route |
+
+Ollama is expected at:
+
+`http://127.0.0.1:11434`
+
+## Real Flowise Backend
+
+The real local Flowise UI is:
+
+`http://127.0.0.1:3001`
+
+The live Flowise chatflow ID is:
+
+`6f946e8b-2d35-4fd4-9ff9-158db1f0b820`
+
+Flowise runs from its local SQLite database:
+
+`bank-credit-ai-poc/flowise/.flowise/database.sqlite`
+
+That database is intentionally ignored by Git. The committed JSON exports live in:
+
+`flowise_project/generated/`
+
+Useful Flowise files:
+
+| File | Purpose |
+| --- | --- |
+| `flowise_project/generated/live-flowise-flowdata-from-db.json` | Raw Flowise `flowData` graph exported from the live DB row |
+| `flowise_project/generated/live-flowise-chatflow-from-db.json` | Full chatflow-style export from the live DB row |
+| `flowise_project/generated/live-flowise-ui-import-from-db.json` | UI import payload |
+| `flowise_project/generated/live-flowise-api-import-from-db.json` | API import payload with stringified `flowData` |
+| `flowise_project/generated/lean1617-docfactor_flowise_fastapi_chatflow.json` | Fixed generated Flowise/FastAPI workflow export |
+
+Useful Flowise scripts:
+
+| Script | Purpose |
+| --- | --- |
+| `scripts/export-live-flowise-json.js` | Export the live SQLite chatflow row to JSON |
+| `scripts/import-live-flowise-json-to-db.js` | Import generated workflow JSON into the live SQLite row with a backup |
+| `scripts/import-flowise-json-to-db.js` | Direct importer for a chosen generated Flowise JSON file |
+| `scripts/update-live-flowise-split.js` | Regenerate the Flowise/FastAPI split graph |
+
+Use the direct importer when Flowise UI import opens a blank flow. The UI import path can be flaky; the DB importer is the reliable path for this project.
+
+## Workflow Ownership
+
+Flowise should show orchestration stages. FastAPI should do secure backend work, document processing, scoring, persistence, and human-decision records.
+
+| # | Workflow area | Should appear in Flowise? | Flowise responsibility | FastAPI responsibility | Node type in Flowise |
+| -: | --- | --- | --- | --- | --- |
+| 1 | Chat Input | Yes | Receive user question | N/A | Native/chat input node |
+| 2 | Runtime Variables | Yes | Pass `customer_id`, `llm_provider`, `llm_model`, language, session context | Validate customer/session permissions | Custom function / variables node |
+| 3 | Document Upload | Yes | Trigger/upload document from chat UI or workflow | Validate file, store file, create document record | HTTP call to `/documents/upload` |
+| 4 | Parser | Yes | Show parser stage in the Flowise workflow | Extract text from PDF, DOCX, image, Excel, CSV | HTTP call / backend pipeline status node |
+| 5 | Chunker | Yes | Show chunking stage in the workflow | Split text into searchable chunks | HTTP call / backend pipeline status node |
+| 6 | Embeddings | Yes | Trigger embedding generation or show status | Generate embeddings, store embedding model/version | HTTP call / backend pipeline status node |
+| 7 | PostgreSQL | Yes, as storage stage | Show where customer/document data is stored | Store customers, docs, chunks, audit logs, decisions | Visual/storage reference node |
+| 8 | pgvector | Yes, as vector index stage | Show vector-search storage layer | Store/search embeddings inside PostgreSQL | Visual/storage reference node |
+| 9 | Retrieval | Yes | Call `/retrieval/query` and receive relevant evidence | Search PostgreSQL/pgvector with customer filter | HTTP retrieval node |
+| 10 | Citation Builder | Yes | Format retrieved chunks into citation-ready evidence | Return filename, page, source metadata | Custom function node |
+| 11 | Prompt Template | Yes | Build final LISA prompt with evidence, policy, missing data | Optionally return policy context | Prompt template node |
+| 12 | LLM Router | Yes | Select local/public model route | Store available provider config/API keys if needed | Router/custom function node |
+| 13 | Ollama Local Model | Yes | Run selected local model through Flowise | Ensure Ollama service/model is running | ChatOllama node |
+| 14 | OpenAI | Yes | Provider option only | Secure API key/config | Provider node |
+| 15 | DeepSeek | Yes | Provider option only | Secure API key/config | Provider/custom API node |
+| 16 | Custom API | Yes | OpenAI-compatible provider option | Secure endpoint/key/config | Provider/custom API node |
+| 17 | LLM Chain | Yes | Execute prompt + selected model | N/A | LLM Chain node |
+| 18 | Output Parser | Yes | Structure LISA response | Optionally validate JSON schema | Output parser node |
+
+Full workflow details are documented in:
+
+`docs/flowise_fastapi_workflow_split.md`
+
+## Backend Capabilities
+
+FastAPI owns the system-of-record work:
+
+| Area | Backend responsibility |
+| --- | --- |
+| Customers | Create, list, recover, and update customer records |
+| Documents | Upload, validate, store, dedupe, recover from disk |
+| Parsing | Extract text from PDF, DOCX, Excel, CSV, images, and text |
+| Chunking | Split parsed text into searchable evidence chunks |
+| Embeddings | Create local hash embeddings and write vector rows |
+| Retrieval | Query customer-filtered evidence through pgvector |
+| Policy | DTI, LTV, rate, monthly payment, recommendation |
+| Committee | Submit committee packets for human review |
+| Final decision | Record human final approval, rejection, deferral, or conditions |
+| Email draft | Draft customer notification while requiring human approval |
+| Audit | Store audit events and trace model/evidence usage |
+
+## Environment
+
+Docker Compose uses:
+
+`bank-credit-ai-poc/.env`
+
+Example values are in:
+
+`bank-credit-ai-poc/.env.example`
+
+Do not commit real secrets. `.env` and local Flowise SQLite files are ignored by Git.
+
+Important local defaults:
+
+| Variable | Default |
+| --- | --- |
+| `WEB_PORT` | `8080` |
+| `BACKEND_URL` | `http://127.0.0.1:8000` |
+| `FLOWISE_PORT` | `3001` |
+| `START_LOCAL_FLOWISE` | `1` |
+| `START_DOCKER_FLOWISE` | `0` |
+| `START_DOCKER_DAEMON` | `1` |
+| `START_OLLAMA` | `1` |
+| `INSTALL_REQUIREMENTS` | `1` |
+| `PYTHON_VENV_DIR` | `.venv` |
+
+## Development Checks
+
+Useful smoke checks:
+
+```bash
+# Frontend JavaScript syntax
+.tools/node-v20.18.3-linux-x64/bin/node --check creditappflowise/docfactor-ui.js
+
+# Backend Python syntax
+python3 -m py_compile bank-credit-ai-poc/backend/app/routers/documents.py
+
+# FastAPI health
+curl -fsS http://127.0.0.1:8000/health
+
+# Main UI served by launcher
+curl -fsS http://127.0.0.1:8080/
+```
+
+## Troubleshooting
+
+### Docker daemon is not reachable
+
+Start Docker inside WSL:
+
+```bash
+sudo service docker start
+./start.sh
+```
+
+If using Docker Desktop, enable WSL integration for the Ubuntu distro.
+
+### Flowise UI import opens a blank flow
+
+Use the direct DB importer instead of the Flowise UI import button:
+
+```bash
+node scripts/import-flowise-json-to-db.js flowise_project/generated/lean1617-docfactor_flowise_fastapi_chatflow.json
+RESTART_LOCAL_FLOWISE=1 ./start.sh
+```
+
+### Local LLM is unreachable
+
+Check Ollama:
+
+```bash
+curl -fsS http://127.0.0.1:11434/api/tags
+ollama pull mistral
+```
+
+Then restart:
 
 ```bash
 RESTART_LOCAL_FLOWISE=1 ./start.sh
 ```
 
-or:
+### Browser still shows old upload behavior
 
-```bash
-RESTART_FLOWISE=1 ./start-flowise.sh
-```
-
-## Live Flowise Workflow
-
-Live Flowise ID:
-
-`6f946e8b-2d35-4fd4-9ff9-158db1f0b820`
-
-Flowise runs from the local SQLite database:
-
-`bank-credit-ai-poc/flowise/.flowise/database.sqlite`
-
-That database is ignored by Git. The committed exported workflow JSON files are:
-
-| File | Purpose |
-| --- | --- |
-| `flowise_project/generated/live-flowise-flowdata-from-db.json` | Raw Flowise `flowData` graph exported from the live DB row. |
-| `flowise_project/generated/live-flowise-chatflow-from-db.json` | Full chatflow-style export from the live DB row. |
-| `flowise_project/generated/live-flowise-ui-import-from-db.json` | UI import payload. |
-| `flowise_project/generated/live-flowise-api-import-from-db.json` | API import payload with stringified `flowData`. |
-
-Utility scripts:
-
-| Script | Purpose |
-| --- | --- |
-| `scripts/export-live-flowise-json.js` | Export the live Flowise SQLite row to JSON. |
-| `scripts/update-live-flowise-split.js` | Regenerate the Flowise/FastAPI split graph. |
-| `scripts/import-live-flowise-json-to-db.js` | Import the generated graph back into the live SQLite row, with a DB backup. |
-
-## Workflow Ownership Table
-
-| Order | Workflow Stage | Done By | Task |
-| --- | --- | --- | --- |
-| 1 | `chat_input` | Flowise | Receives the user question. |
-| 2 | `runtime_vars` | Flowise | Normalizes customer, session, user, language, provider, model, policy mode, and question. |
-| 3 | `document_upload` | FastAPI via Flowise | Calls `POST /documents/upload` for uploaded files and metadata. |
-| 4 | `document_status` | FastAPI via Flowise | Calls `GET /documents/{document_id}/status` for ingestion status. |
-| 5 | `parser` | FastAPI | Parses uploaded document content. |
-| 6 | `chunker` | FastAPI | Chunks parsed document text. |
-| 7 | `embeddings` | FastAPI | Generates embeddings for chunks. |
-| 8 | `postgresql` | FastAPI | Stores customers, documents, chunks, audits, scores, and workflow records. |
-| 9 | `pgvector` | FastAPI | Stores/searches vector embeddings. |
-| 10 | `http_retrieval_tool` | FastAPI via Flowise | Calls `POST /retrieval/query`. |
-| 11 | `retriever` | FastAPI | Retrieves customer evidence chunks. |
-| 12 | `citation_builder` | Flowise | Converts retrieved evidence into citation text for LISA. |
-| 13 | `loan_policy_scoring` | FastAPI via Flowise | Calls `POST /loan-policy/score`. |
-| 14 | `dti` | FastAPI | Calculates/displays debt-to-income result. |
-| 15 | `ltv` | FastAPI | Calculates/displays loan-to-value result. |
-| 16 | `interest_rate` | FastAPI | Calculates/displays policy interest rate. |
-| 17 | `monthly_payment` | FastAPI | Calculates/displays estimated monthly payment. |
-| 18 | `recommendation` | FastAPI | Produces policy recommendation and breach summary. |
-| 19 | `prompt_template` | Flowise | Builds LISA prompt from evidence, citations, policy score, and runtime variables. |
-| 20 | `llm_router` | Flowise | Selects one provider route from `llm_provider` and `llm_model`. |
-| 21 | `ollama_mistral` | Flowise | Ollama provider option. |
-| 22 | `ollama_gemma` | Flowise | Ollama local model option. |
-| 23 | `openai_provider` | Flowise | OpenAI provider option. |
-| 24 | `deepseek_provider` | Flowise | DeepSeek provider option. |
-| 25 | `custom_provider` | Flowise | Custom provider option. |
-| 26 | `llm_chain` | Flowise | Runs the selected LLM against the LISA prompt. |
-| 27 | `output_parser` | Flowise | Shapes the raw LLM answer into the expected credit-review sections. |
-| 28 | `credit_assessment` | Flowise | Marks the result as decision support only. |
-| 29 | `approval_committee` | FastAPI via Flowise | Calls the committee submission stage. |
-| 30 | `final_decision` | FastAPI via Flowise | Records human final decision only. |
-| 31 | `customer_email_draft` | FastAPI via Flowise | Drafts customer-facing email from decision state. |
-| 32 | `audit_logging` | FastAPI via Flowise | Calls `POST /audit` with question, evidence IDs, model, score, and answer. |
-| 33 | `chat_output` | Flowise | Displays the final response. |
-
-Full details are in `docs/flowise_fastapi_workflow_split.md`.
+Hard refresh `http://127.0.0.1:8080`. The app uses cache-busted script URLs, but Chrome can still hold older assets in some sessions.
 
 ## Human Review Rule
 
-This system is a decision-support tool. It must preserve this rule in the workflow and LISA output:
+This system is decision support only.
+
+Every final credit output must preserve this rule:
 
 `Human credit officer review required.`

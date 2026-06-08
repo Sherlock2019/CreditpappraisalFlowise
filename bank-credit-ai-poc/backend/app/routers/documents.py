@@ -37,6 +37,11 @@ def _synthetic_customer_id(filename: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def _synthetic_customer_code(filename: str) -> str | None:
+    match = re.search(r"\bCUST-(\d{3,})\b", filename or "", flags=re.IGNORECASE)
+    return f"CUST-{int(match.group(1)):03d}" if match else None
+
+
 def _sync_customer_sequence(db: Session) -> None:
     bind = db.get_bind()
     if bind.dialect.name != "postgresql":
@@ -55,22 +60,35 @@ def _sync_customer_sequence(db: Session) -> None:
 
 
 def _ensure_upload_customer(db: Session, requested_customer_id: str, filename: str) -> models.Customer:
-    synthetic_id = _synthetic_customer_id(filename)
-    if synthetic_id is not None:
-        customer = db.query(models.Customer).filter(models.Customer.id == synthetic_id).first()
-        if not customer:
-            customer = models.Customer(
-                id=synthetic_id,
-                name=f"CUST-{synthetic_id:03d}",
-                customer_type="business",
-                industry="Credit appraisal",
-                country=None,
-            )
-            db.add(customer)
+    synthetic_code = _synthetic_customer_code(filename)
+    if synthetic_code is not None:
+        customer = db.query(models.Customer).filter(func.lower(models.Customer.name) == synthetic_code.lower()).first()
+        if customer:
+            return customer
+
+        synthetic_id = _synthetic_customer_id(filename)
+        customer_by_id = db.query(models.Customer).filter(models.Customer.id == synthetic_id).first() if synthetic_id is not None else None
+        if customer_by_id and (
+            (customer_by_id.name or "").casefold().startswith("cust-")
+            or (customer_by_id.name or "").casefold().startswith("recovered customer")
+        ):
+            customer_by_id.name = synthetic_code
+            customer_by_id.customer_type = customer_by_id.customer_type or "business"
+            customer_by_id.industry = customer_by_id.industry or "Credit appraisal"
+            db.add(customer_by_id)
             db.commit()
-            _sync_customer_sequence(db)
-            db.commit()
-            db.refresh(customer)
+            db.refresh(customer_by_id)
+            return customer_by_id
+
+        customer = models.Customer(
+            name=synthetic_code,
+            customer_type="business",
+            industry="Credit appraisal",
+            country=None,
+        )
+        db.add(customer)
+        db.commit()
+        db.refresh(customer)
         return customer
     return ensure_customer(db, requested_customer_id)
 
