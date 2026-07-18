@@ -26,7 +26,7 @@ START_FLOWISE="${START_FLOWISE:-1}"
 FLOWISE_NPX_PACKAGE="${FLOWISE_NPX_PACKAGE:-flowise@3.1.2}"
 FLOWISE_COMMAND="${FLOWISE_COMMAND:-}"
 START_LAUNCHER="${START_LAUNCHER:-1}"
-OPEN_BROWSER="${OPEN_BROWSER:-0}"
+OPEN_BROWSER="${OPEN_BROWSER:-1}"
 PRELOAD_DEMO_DATASET="${PRELOAD_DEMO_DATASET:-1}"
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
@@ -305,8 +305,24 @@ Press Ctrl+C to stop FastAPI, Streamlit, Flowise, and the launcher.
 PostgreSQL remains installed/running as a local service.
 EOF
 
-if [[ "$OPEN_BROWSER" == "1" ]] && command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "http://localhost:${LAUNCHER_PORT}" >/dev/null 2>&1 || true
+open_url() {
+  local url="$1"
+  if command -v powershell.exe >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "Start-Process '${url}'" >/dev/null 2>&1 &
+  elif command -v cmd.exe >/dev/null 2>&1; then
+    cmd.exe /C start "" "${url}" >/dev/null 2>&1 &
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "${url}" >/dev/null 2>&1 &
+  fi
+  return 0
+}
+
+if [[ "$OPEN_BROWSER" == "1" ]]; then
+  LAUNCH_TARGET="http://localhost:${LAUNCHER_PORT}"
+  if [[ "${PUBLIC_HOST}" != "localhost" ]] && curl -sf --max-time 2 "http://${PUBLIC_HOST}:${LAUNCHER_PORT}" >/dev/null 2>&1; then
+    LAUNCH_TARGET="http://${PUBLIC_HOST}:${LAUNCHER_PORT}"
+  fi
+  open_url "${LAUNCH_TARGET}"
 fi
 
 wait
