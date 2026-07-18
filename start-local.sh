@@ -37,7 +37,20 @@ log() {
   printf '\n[%s] %s\n' "$(date '+%H:%M:%S')" "$*"
 }
 
+print_urls() {
+  if [[ "${URLS_PRINTED:-0}" == "1" ]]; then return 0; fi
+  URLS_PRINTED=1
+  echo ""
+  echo "==================== Web App URLs ===================="
+  echo "Launcher:           http://localhost:${LAUNCHER_PORT}"
+  echo "Credit Appraisal:   http://localhost:${FRONTEND_PORT}"
+  echo "Backend Swagger:    http://localhost:${BACKEND_PORT}/docs"
+  echo "Flowise:            http://localhost:${FLOWISE_PORT}"
+  echo "======================================================"
+}
+
 cleanup() {
+  print_urls
   for pid in "${BACKEND_PID:-}" "${FRONTEND_PID:-}" "${FLOWISE_PID:-}" "${LAUNCHER_PID:-}"; do
     if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
       kill "$pid" 2>/dev/null || true

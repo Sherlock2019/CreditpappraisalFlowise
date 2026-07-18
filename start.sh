@@ -35,7 +35,21 @@ if [[ ! -d "$UI_DIR" ]]; then
   exit 1
 fi
 
+print_urls() {
+  if [[ "${URLS_PRINTED:-0}" == "1" ]]; then return 0; fi
+  URLS_PRINTED=1
+  echo ""
+  echo "==================== Web App URLs ===================="
+  echo "Credit Appraisal UI:  http://127.0.0.1:${WEB_PORT}"
+  echo "Streamlit UI:         ${STREAMLIT_URL}"
+  echo "FastAPI Health:       ${BACKEND_URL}/health"
+  echo "FastAPI Swagger:      ${FASTAPI_URL}"
+  echo "Flowise UI:           ${FLOWISE_URL}"
+  echo "======================================================"
+}
+
 cleanup() {
+  print_urls
   if [[ -n "${WEB_PID:-}" ]] && kill -0 "$WEB_PID" 2>/dev/null; then
     kill "$WEB_PID" 2>/dev/null || true
   fi

@@ -18,6 +18,8 @@ elif [[ -x "${LOCAL_NODE22_DIR}/node" ]]; then
   export PATH="${LOCAL_NODE22_DIR}:$PATH"
 fi
 
+trap 'echo ""; echo "==================== Web App URLs ===================="; echo "Flowise UI:  http://127.0.0.1:${FLOWISE_PORT}"; echo "======================================================"' EXIT
+
 mkdir -p "$FLOWISE_HOME" "${POC_DIR}/logs"
 
 if [[ -f "${POC_DIR}/.env" ]]; then
