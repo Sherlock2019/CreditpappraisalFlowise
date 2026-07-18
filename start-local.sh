@@ -37,15 +37,32 @@ log() {
   printf '\n[%s] %s\n' "$(date '+%H:%M:%S')" "$*"
 }
 
+detect_public_ip() {
+  if [[ -n "${PUBLIC_IP:-}" ]]; then echo "${PUBLIC_IP}"; return 0; fi
+  local ip="" token=""
+  token="$(curl -s --max-time 1 -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)"
+  if [[ -n "${token}" ]]; then
+    ip="$(curl -s --max-time 1 -H "X-aws-ec2-metadata-token: ${token}" \
+      "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null || true)"
+  fi
+  [[ -z "${ip}" ]] && ip="$(curl -s --max-time 1 "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null || true)"
+  [[ -z "${ip}" ]] && ip="$(curl -s --max-time 2 https://api.ipify.org 2>/dev/null || true)"
+  echo "${ip}"
+}
+
+PUBLIC_HOST="$(detect_public_ip)"
+[[ -z "${PUBLIC_HOST}" ]] && PUBLIC_HOST="localhost"
+
 print_urls() {
   if [[ "${URLS_PRINTED:-0}" == "1" ]]; then return 0; fi
   URLS_PRINTED=1
   echo ""
   echo "==================== Web App URLs ===================="
-  echo "Launcher:           http://localhost:${LAUNCHER_PORT}"
-  echo "Credit Appraisal:   http://localhost:${FRONTEND_PORT}"
-  echo "Backend Swagger:    http://localhost:${BACKEND_PORT}/docs"
-  echo "Flowise:            http://localhost:${FLOWISE_PORT}"
+  echo "Launcher:           http://${PUBLIC_HOST}:${LAUNCHER_PORT}"
+  echo "Credit Appraisal:   http://${PUBLIC_HOST}:${FRONTEND_PORT}"
+  echo "Backend Swagger:    http://${PUBLIC_HOST}:${BACKEND_PORT}/docs"
+  echo "Flowise:            http://${PUBLIC_HOST}:${FLOWISE_PORT}"
   echo "======================================================"
 }
 
@@ -100,13 +117,15 @@ ensure_postgres_running() {
 
 ensure_database() {
   log "Creating local database/user if needed."
-  sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" | grep -q 1 \
-    || sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
+  if ! PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" >/dev/null 2>&1; then
+    sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" | grep -q 1 \
+      || sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
 
-  sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1 \
-    || sudo -u postgres createdb -O "$DB_USER" "$DB_NAME"
+    sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1 \
+      || sudo -u postgres createdb -O "$DB_USER" "$DB_NAME"
 
-  sudo -u postgres psql -d "$DB_NAME" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null
+    sudo -u postgres psql -d "$DB_NAME" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null
+  fi
   PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$DB_SQL" >/dev/null
 }
 
@@ -170,7 +189,7 @@ start_frontend() {
     [[ -f "${POC_DIR}/.env" ]] && source "${POC_DIR}/.env"
     source "$LOCAL_ENV"
     set +a
-    "${FRONTEND_VENV}/bin/streamlit" run streamlit_app.py --server.address=0.0.0.0 --server.port "$FRONTEND_PORT"
+    "${FRONTEND_VENV}/bin/streamlit" run streamlit_app.py --server.address=0.0.0.0 --server.port "$FRONTEND_PORT" --server.headless true
   ) >"${POC_DIR}/logs/frontend.log" 2>&1 &
   FRONTEND_PID=$!
 }
@@ -210,7 +229,7 @@ start_launcher() {
     return
   fi
   log "Starting launcher on http://localhost:${LAUNCHER_PORT}"
-  "$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$LAUNCHER_PORT" --bind 127.0.0.1 --backend "http://127.0.0.1:${BACKEND_PORT}" >"${APP_DIR}/web.log" 2>&1 &
+  "$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$LAUNCHER_PORT" --bind 0.0.0.0 --backend "http://127.0.0.1:${BACKEND_PORT}" >"${APP_DIR}/web.log" 2>&1 &
   LAUNCHER_PID=$!
 }
 
@@ -271,10 +290,10 @@ cat <<EOF
 
 Local POC is running.
 
-Launcher:           http://localhost:${LAUNCHER_PORT}
-Credit Appraisal:   http://localhost:${FRONTEND_PORT}
-Backend Swagger:    http://localhost:${BACKEND_PORT}/docs
-Flowise:            http://localhost:${FLOWISE_PORT}
+Launcher:           http://${PUBLIC_HOST}:${LAUNCHER_PORT}
+Credit Appraisal:   http://${PUBLIC_HOST}:${FRONTEND_PORT}
+Backend Swagger:    http://${PUBLIC_HOST}:${BACKEND_PORT}/docs
+Flowise:            http://${PUBLIC_HOST}:${FLOWISE_PORT}
 PostgreSQL:         ${DB_HOST}:${DB_PORT}/${DB_NAME}
 
 Logs:

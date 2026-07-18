@@ -35,16 +35,33 @@ if [[ ! -d "$UI_DIR" ]]; then
   exit 1
 fi
 
+detect_public_ip() {
+  if [[ -n "${PUBLIC_IP:-}" ]]; then echo "${PUBLIC_IP}"; return 0; fi
+  local ip="" token=""
+  token="$(curl -s --max-time 1 -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null || true)"
+  if [[ -n "${token}" ]]; then
+    ip="$(curl -s --max-time 1 -H "X-aws-ec2-metadata-token: ${token}" \
+      "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null || true)"
+  fi
+  [[ -z "${ip}" ]] && ip="$(curl -s --max-time 1 "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null || true)"
+  [[ -z "${ip}" ]] && ip="$(curl -s --max-time 2 https://api.ipify.org 2>/dev/null || true)"
+  echo "${ip}"
+}
+
+PUBLIC_HOST="$(detect_public_ip)"
+[[ -z "${PUBLIC_HOST}" ]] && PUBLIC_HOST="localhost"
+
 print_urls() {
   if [[ "${URLS_PRINTED:-0}" == "1" ]]; then return 0; fi
   URLS_PRINTED=1
   echo ""
   echo "==================== Web App URLs ===================="
-  echo "Credit Appraisal UI:  http://127.0.0.1:${WEB_PORT}"
-  echo "Streamlit UI:         ${STREAMLIT_URL}"
-  echo "FastAPI Health:       ${BACKEND_URL}/health"
-  echo "FastAPI Swagger:      ${FASTAPI_URL}"
-  echo "Flowise UI:           ${FLOWISE_URL}"
+  echo "Credit Appraisal UI:  http://${PUBLIC_HOST}:${WEB_PORT}"
+  echo "Streamlit UI:         http://${PUBLIC_HOST}:8501"
+  echo "FastAPI Health:       http://${PUBLIC_HOST}:8000/health"
+  echo "FastAPI Swagger:      http://${PUBLIC_HOST}:8000/docs"
+  echo "Flowise UI:           http://${PUBLIC_HOST}:${FLOWISE_PORT:-3001}"
   echo "======================================================"
 }
 
@@ -368,7 +385,7 @@ if [[ -f "${APP_DIR}/web.pid" ]]; then
     sleep 1
   fi
 fi
-"$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$WEB_PORT" --bind 127.0.0.1 --backend "$BACKEND_URL" --directory "$UI_DIR" >web.log 2>&1 &
+"$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$WEB_PORT" --bind 0.0.0.0 --backend "$BACKEND_URL" --directory "$UI_DIR" >web.log 2>&1 &
 WEB_PID=$!
 echo "$WEB_PID" >"${APP_DIR}/web.pid"
 
@@ -388,11 +405,11 @@ fi
 cat <<EOF
 
 Ready.
-Credit Appraisal UI:  http://127.0.0.1:${WEB_PORT}
-Streamlit UI:         http://127.0.0.1:8501
-FastAPI Health:       ${BACKEND_URL}/health
-FastAPI Swagger:      ${FASTAPI_URL}
-Flowise UI:           ${FLOWISE_URL}
+Credit Appraisal UI:  http://${PUBLIC_HOST}:${WEB_PORT}
+Streamlit UI:         http://${PUBLIC_HOST}:8501
+FastAPI Health:       http://${PUBLIC_HOST}:8000/health
+FastAPI Swagger:      http://${PUBLIC_HOST}:8000/docs
+Flowise UI:           http://${PUBLIC_HOST}:${FLOWISE_PORT:-3001}
 
 Logs:
   ${APP_DIR}/web.log
