@@ -317,6 +317,12 @@ EOF
       exit 1
     fi
 
+    # .env is gitignored, so a fresh clone (e.g. on a server) only has .env.example
+    if [[ ! -f "${POC_DIR}/.env" && -f "${POC_DIR}/.env.example" ]]; then
+      echo "No .env found; creating ${POC_DIR}/.env from .env.example"
+      cp "${POC_DIR}/.env.example" "${POC_DIR}/.env"
+    fi
+
     echo "Starting credit appraisal POC stack with Docker Compose..."
     if [[ "$START_DOCKER_FLOWISE" == "1" ]]; then
       COMPOSE_CMD=(docker compose --profile flowise up --build -d)
