@@ -391,7 +391,8 @@ if [[ -f "${APP_DIR}/web.pid" ]]; then
     sleep 1
   fi
 fi
-"$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$WEB_PORT" --bind 0.0.0.0 --backend "$BACKEND_URL" --directory "$UI_DIR" >web.log 2>&1 &
+# detached (setsid/nohup) so the UI keeps running after Ctrl+C or logout
+setsid nohup "$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$WEB_PORT" --bind 0.0.0.0 --backend "$BACKEND_URL" --directory "$UI_DIR" >"${APP_DIR}/web.log" 2>&1 </dev/null &
 WEB_PID=$!
 echo "$WEB_PID" >"${APP_DIR}/web.pid"
 
@@ -421,7 +422,8 @@ Logs:
   ${APP_DIR}/web.log
   UI directory: ${UI_DIR}
 
-Press Ctrl+C to stop the launcher web server.
+Everything keeps running in the background after this script exits.
+Stop the launcher web server with: kill \$(cat ${APP_DIR}/web.pid)
 Use "docker compose down" in ${POC_DIR} to stop the POC stack.
 Flowise Docker image is skipped by default. Use START_DOCKER_FLOWISE=1 to include it.
 Local Flowise is started by default. Use START_LOCAL_FLOWISE=0 to skip it.
@@ -434,5 +436,3 @@ EOF
 if [[ "$OPEN_BROWSER" == "1" ]] && command -v xdg-open >/dev/null 2>&1; then
   xdg-open "http://127.0.0.1:${WEB_PORT}" >/dev/null 2>&1 || true
 fi
-
-wait
