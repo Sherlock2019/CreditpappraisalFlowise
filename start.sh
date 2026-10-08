@@ -375,6 +375,24 @@ if [[ "$START_LOCAL_FLOWISE" == "1" ]]; then
   fi
 fi
 
+# Flow that FastAPI calls through /api/v1/prediction/<id>; seeded by scripts/ensure-flowise-flows.js.
+DEFAULT_FLOWISE_CHATFLOW_ID="6f946e8b-2d35-4fd4-9ff9-158db1f0b820"
+
+# Once Flowise answers, add the credit appraisal flows if its database does not have them yet.
+if [[ "$START_LOCAL_FLOWISE" == "1" ]] && command -v node >/dev/null 2>&1; then
+  (
+    for _ in $(seq 1 300); do
+      is_flowise "$FLOWISE_PORT" && break
+      sleep 3
+    done
+    if is_flowise "$FLOWISE_PORT"; then
+      node "${APP_DIR}/scripts/ensure-flowise-flows.js"
+    else
+      echo "Flowise did not answer on port ${FLOWISE_PORT}; flows were not checked."
+    fi
+  ) >"${POC_DIR}/logs/flowise-seed.log" 2>&1 </dev/null &
+fi
+
 flowise_status() {
   if [[ "$START_LOCAL_FLOWISE" != "1" ]]; then
     echo "not started by this launcher"
@@ -515,6 +533,7 @@ start_local_stack() {
       # shellcheck disable=SC1090
       source "$local_env"
       FLOWISE_API_URL="http://localhost:${FLOWISE_PORT}"
+      FLOWISE_CHATFLOW_ID="${FLOWISE_CHATFLOW_ID:-$DEFAULT_FLOWISE_CHATFLOW_ID}"
       BACKEND_URL="http://localhost:${BACKEND_PORT}"
       set +a
       exec setsid nohup "${backend_venv}/bin/uvicorn" app.main:app --host 0.0.0.0 --port "$BACKEND_PORT"

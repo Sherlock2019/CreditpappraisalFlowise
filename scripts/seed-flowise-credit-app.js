@@ -109,8 +109,8 @@ const flowData = {
         ],
         inputAnchors: [],
         inputs: {
-          baseUrl: "http://127.0.0.1:11434",
-          modelName: "mistral:7b-instruct",
+          baseUrl: process.env.FLOWISE_OLLAMA_BASE_URL || "http://127.0.0.1:11434",
+          modelName: process.env.FLOWISE_OLLAMA_MODEL || "mistral:7b-instruct",
           temperature: "0.2",
           streaming: true,
           numCtx: "4096"
@@ -349,7 +349,8 @@ db.serialize(() => {
         fs.mkdirSync(path.dirname(flowPath), { recursive: true });
         fs.writeFileSync(flowPath, JSON.stringify({ id: flowId, name: flowName, ...flowData }, null, 2));
 
-        if (fs.existsSync(envPath)) {
+        // SEED_UPDATE_ENV=0 seeds the flow only and leaves bank-credit-ai-poc/.env untouched.
+        if (process.env.SEED_UPDATE_ENV !== "0" && fs.existsSync(envPath)) {
           let env = fs.readFileSync(envPath, "utf8");
           env = updateEnv(env, "FLOWISE_API_URL", "http://host.docker.internal:3001");
           env = updateEnv(env, "FLOWISE_CHATFLOW_ID", flowId);

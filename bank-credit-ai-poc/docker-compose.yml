@@ -19,6 +19,7 @@ services:
       - .env
     environment:
       FLOWISE_API_URL: http://host.docker.internal:${FLOWISE_PORT:-3001}
+      FLOWISE_CHATFLOW_ID: ${FLOWISE_CHATFLOW_ID:-6f946e8b-2d35-4fd4-9ff9-158db1f0b820}
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       DEMO_CUSTOMER_DOCUMENTS_DIR: /app/demo/customer_documents
     extra_hosts:
