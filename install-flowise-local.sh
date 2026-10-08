@@ -40,7 +40,8 @@ npm install \
   --no-fund \
   --prefer-offline \
   "flowise@${FLOWISE_VERSION}" \
-  "sqlite3@5.1.7"
+  "sqlite3@5.1.7" \
+  "connect-sqlite3@0.9.16"
 
 echo "Pinning nested uuid@13 packages to a CommonJS-compatible version."
 mkdir -p "$UUID_CJS_DIR"
