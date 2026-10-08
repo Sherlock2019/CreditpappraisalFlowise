@@ -76,6 +76,10 @@ if [[ ! -x "$LOCAL_FLOWISE_BIN" ]]; then
   exit 1
 fi
 
+# PostgreSQL login used by the Postgres (pgvector) vector store node of the RAG flow.
+export POSTGRES_VECTORSTORE_USER="${POSTGRES_VECTORSTORE_USER:-${DB_USER:-credit_ai_user}}"
+export POSTGRES_VECTORSTORE_PASSWORD="${POSTGRES_VECTORSTORE_PASSWORD:-${DB_PASSWORD:-credit_ai_password}}"
+
 echo "Starting flowise@${FLOWISE_VERSION} on http://127.0.0.1:${FLOWISE_PORT}"
 echo "Log: ${POC_DIR}/logs/flowise.log"
 
