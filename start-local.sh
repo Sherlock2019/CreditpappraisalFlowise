@@ -47,7 +47,8 @@ detect_public_ip() {
       "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null || true)"
   fi
   [[ -z "${ip}" ]] && ip="$(curl -s --max-time 1 "http://169.254.169.254/latest/meta-data/public-ipv4" 2>/dev/null || true)"
-  [[ -z "${ip}" ]] && ip="$(curl -s --max-time 2 https://api.ipify.org 2>/dev/null || true)"
+  # Only the EC2 metadata service counts: on a laptop/WSL the router's public IP is not reachable, so use localhost.
+  [[ "${ip}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || ip=""
   echo "${ip}"
 }
 
