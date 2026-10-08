@@ -134,6 +134,7 @@ async def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db)) -> s
                 custom_public_api_model=runtime_model,
                 llm_model=runtime_model,
                 workflow_context=workflow_context,
+                customer_name=customer.name,
             )
             flowise_used = True
         else:

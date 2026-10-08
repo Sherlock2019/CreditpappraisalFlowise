@@ -33,7 +33,7 @@ const legacyFlowId = "docfactor-credit-appraisal-rag-backend";
 const flowId = process.env.FLOWISE_CHATFLOW_ID && process.env.FLOWISE_CHATFLOW_ID !== legacyFlowId
   ? process.env.FLOWISE_CHATFLOW_ID
   : "6f946e8b-2d35-4fd4-9ff9-158db1f0b820";
-const flowName = "Docfactor Credit Appraisal RAG Backend";
+const flowName = "Docfactor Credit Appraisal RAG Workflow";
 
 const ollamaBaseUrl = process.env.FLOWISE_OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 const chatModel = process.env.FLOWISE_OLLAMA_MODEL || "mistral:7b-instruct";
@@ -294,7 +294,8 @@ function connect(source, target, inputName) {
   };
 }
 
-const splitter = buildNode("recursiveCharacterTextSplitter", 0, { x: 40, y: 60 }, {
+// Positions leave room for each node's full height so nothing overlaps on the canvas.
+const splitter = buildNode("recursiveCharacterTextSplitter", 0, { x: 0, y: 40 }, {
   chunkSize: 1000,
   chunkOverlap: 200,
 });
@@ -303,11 +304,11 @@ const loader = buildNode("folderFiles", 0, { x: 400, y: 40 }, {
   recursive: true,
   pdfUsage: "perPage",
 }, "document");
-const embeddings = buildNode("ollamaEmbedding", 0, { x: 400, y: 520 }, {
+const embeddings = buildNode("ollamaEmbedding", 0, { x: 400, y: 640 }, {
   baseUrl: ollamaBaseUrl,
   modelName: embeddingModel,
 });
-const vectorStore = buildNode("postgres", 0, { x: 780, y: 160 }, {
+const vectorStore = buildNode("postgres", 0, { x: 820, y: 200 }, {
   host: pgHost,
   database: pgDatabase,
   port: pgPort,
@@ -315,14 +316,14 @@ const vectorStore = buildNode("postgres", 0, { x: 780, y: 160 }, {
   distanceStrategy: "cosine",
   topK: 6,
 }, "retriever");
-const chat = buildNode("chatOllama", 0, { x: 780, y: 680 }, {
+const chat = buildNode("chatOllama", 0, { x: 820, y: 1020 }, {
   baseUrl: ollamaBaseUrl,
   modelName: chatModel,
   temperature: 0.2,
   streaming: true,
   numCtx: 8192,
 });
-const chain = buildNode("conversationalRetrievalQAChain", 0, { x: 1180, y: 300 }, {
+const chain = buildNode("conversationalRetrievalQAChain", 0, { x: 1260, y: 560 }, {
   returnSourceDocuments: true,
   rephrasePrompt,
   responsePrompt,
@@ -337,7 +338,7 @@ const flowData = {
     connect(vectorStore, chain, "vectorStoreRetriever"),
     connect(chat, chain, "model"),
   ],
-  viewport: { x: 20, y: 20, zoom: 0.7 },
+  viewport: { x: 40, y: 20, zoom: 0.5 },
 };
 
 function updateEnv(content, key, value) {
@@ -367,7 +368,21 @@ db.serialize(() => {
         "Give me a preliminary risk level with citations."
       ]
     });
-    const apiConfig = JSON.stringify({ overrideConfig: true });
+    // Let API callers (FastAPI) narrow retrieval to one customer through the Postgres metadata filter.
+    const metadataFilterOverride = [{
+      nodeId: vectorStore.id,
+      label: "Postgres Metadata Filter",
+      name: "pgMetadataFilter",
+      type: "json",
+      enabled: true,
+    }];
+    const apiConfig = JSON.stringify({
+      overrideConfig: {
+        status: true,
+        nodes: { [vectorStore.data.label]: metadataFilterOverride, [vectorStore.data.name]: metadataFilterOverride },
+        variables: [],
+      },
+    });
 
     db.run(
       "delete from chat_flow where id = ?",

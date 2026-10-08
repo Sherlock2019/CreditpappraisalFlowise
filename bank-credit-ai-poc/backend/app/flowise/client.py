@@ -7,6 +7,8 @@ import httpx
 from app.flowise.schemas import FlowisePredictionRequest, FlowisePredictionResponse
 
 TRANSIENT_STATUS_CODES = {502, 503, 504}
+# Postgres vector store node in the flow seeded by scripts/seed-flowise-credit-app.js.
+VECTOR_STORE_NODE_ID = "postgres_0"
 
 
 class FlowiseClient:
@@ -15,7 +17,7 @@ class FlowiseClient:
         base_url: str,
         chatflow_id: str,
         api_key: str | None = None,
-        timeout: float = 60,
+        timeout: float = 600,  # local Ollama models can take minutes per answer
         max_retries: int = 2,
     ) -> None:
         self.base_url = (base_url or "").rstrip("/")
@@ -45,9 +47,12 @@ class FlowiseClient:
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
+        override_config: dict = {"vars": request.vars.model_dump(mode="json")}
+        if request.metadata_filter:
+            override_config["pgMetadataFilter"] = {VECTOR_STORE_NODE_ID: request.metadata_filter}
         payload = {
             "question": request.question,
-            "overrideConfig": {"vars": request.vars.model_dump(mode="json")},
+            "overrideConfig": override_config,
         }
         last_error: str | None = None
 

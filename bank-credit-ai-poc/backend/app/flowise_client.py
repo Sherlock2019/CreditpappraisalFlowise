@@ -112,6 +112,7 @@ async def call_flowise_chat(
     custom_public_api_model: str | None = None,
     llm_model: str | None = None,
     workflow_context: dict[str, Any] | None = None,
+    customer_name: str | None = None,
 ) -> dict[str, str]:
     settings = get_settings()
     if not settings.flowise_chatflow_id:
@@ -130,6 +131,7 @@ async def call_flowise_chat(
 
     request = FlowisePredictionRequest(
         question=_build_flowise_question(question, customer_id, context, runtime_vars),
+        metadata_filter={"customer": customer_name} if customer_name else None,
         vars=FlowiseRuntimeVars(
             customer_id=str(customer_id),
             llm_provider=llm_provider,

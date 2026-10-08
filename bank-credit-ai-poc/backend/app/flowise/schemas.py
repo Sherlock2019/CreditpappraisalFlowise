@@ -33,6 +33,8 @@ class FlowiseRuntimeVars(BaseModel):
 class FlowisePredictionRequest(BaseModel):
     question: str
     vars: FlowiseRuntimeVars = Field(default_factory=FlowiseRuntimeVars)
+    # Restricts pgvector retrieval in the Flowise flow, e.g. {"customer": "CUST-001"}.
+    metadata_filter: dict | None = None
 
 
 class FlowisePredictionResponse(BaseModel):

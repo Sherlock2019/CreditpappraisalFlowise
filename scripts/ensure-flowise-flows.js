@@ -18,15 +18,15 @@ const sqlite3 = require("../.tools/flowise-3.1.2/node_modules/sqlite3");
 
 // Runnable flow called by FastAPI through /api/v1/prediction/<id>.
 const BACKEND_FLOW_ID = "6f946e8b-2d35-4fd4-9ff9-158db1f0b820";
-// Full 16-stage workflow canvas, kept for reference and design.
-const WORKFLOW_FLOW_ID = "7a1d2c3e-5b4f-4c6d-8e9f-0a1b2c3d4e5f";
+// Placeholder canvas imported by an earlier version of this script.
+const MOCKUP_FLOW_ID = "7a1d2c3e-5b4f-4c6d-8e9f-0a1b2c3d4e5f";
 
 const root = path.join(__dirname, "..");
 const dbPath = path.join(root, "bank-credit-ai-poc", "flowise", ".flowise", "database.sqlite");
 const apiKeyPath = path.join(path.dirname(dbPath), "launcher-api-key");
+const RAG_TABLE = process.env.FLOWISE_RAG_PG_TABLE || "flowise_rag_chunks";
 const API_KEY_NAME = "credit-appraisal-launcher";
 const API_KEY_PERMISSIONS = ["chatflows:view", "chatflows:update", "documentStores:upsert-config"];
-const workflowPath =path.join(root, "flowise_project", "generated", "live-flowise-flowdata-from-db.json");
 const ollamaBaseUrl = (process.env.FLOWISE_OLLAMA_BASE_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
 const flowiseUrl = (process.env.FLOWISE_URL || `http://127.0.0.1:${process.env.FLOWISE_PORT || 3001}`).replace(/\/$/, "");
 
@@ -92,8 +92,56 @@ async function launcherApiKey() {
   return apiKey;
 }
 
+function ragDatabase() {
+  const { Client } = require("../.tools/flowise-3.1.2/node_modules/pg");
+  return new Client({
+    host: process.env.FLOWISE_RAG_PG_HOST || "localhost",
+    port: Number(process.env.FLOWISE_RAG_PG_PORT || 5432),
+    database: process.env.FLOWISE_RAG_PG_DATABASE || "credit_ai",
+    user: process.env.POSTGRES_VECTORSTORE_USER || process.env.DB_USER || "credit_ai_user",
+    password: process.env.POSTGRES_VECTORSTORE_PASSWORD || process.env.DB_PASSWORD || "credit_ai_password",
+  });
+}
+
+async function storedChunkCount() {
+  const client = ragDatabase();
+  try {
+    await client.connect();
+    const result = await client.query(`select count(*)::int as chunks from ${RAG_TABLE}`);
+    return result.rows[0].chunks;
+  } catch (error) {
+    return 0; // table not created yet
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
+// Each customer's files live in a CUST-nnn folder; copy that id into the chunk metadata
+// so retrieval can be filtered to the selected customer.
+async function tagChunksWithCustomer() {
+  const client = ragDatabase();
+  try {
+    await client.connect();
+    const result = await client.query(
+      `update ${RAG_TABLE}
+          set metadata = metadata || jsonb_build_object('customer', substring(metadata->>'source' from 'CUST-[0-9]+'))
+        where metadata->>'source' ~ 'CUST-[0-9]+' and not (metadata ? 'customer')`
+    );
+    console.log(`Tagged ${result.rowCount} chunks with their customer id.`);
+  } catch (error) {
+    console.log(`Could not tag chunks with customer ids: ${error.message}`);
+  } finally {
+    await client.end().catch(() => {});
+  }
+}
+
 // Chunk, embed and store the customer documents in PostgreSQL through the flow's own nodes.
 async function upsertDocuments() {
+  const chunks = await storedChunkCount();
+  if (chunks > 0 && process.env.FLOWISE_FORCE_UPSERT !== "1") {
+    console.log(`PostgreSQL vector store already holds ${chunks} chunks; skipping the document load.`);
+    return;
+  }
   const url = `${flowiseUrl}/api/v1/vector/upsert/${BACKEND_FLOW_ID}`;
   const apiKey = await launcherApiKey();
   console.log(`Loading documents into the PostgreSQL vector store through ${url} (this can take several minutes)...`);
@@ -116,7 +164,7 @@ async function main() {
 
   const db = new sqlite3.Database(dbPath);
   const workspaces = await query(db, "select id from workspace limit 1");
-  const flows = await query(db, "select id from chat_flow where id in (?, ?)", [BACKEND_FLOW_ID, WORKFLOW_FLOW_ID]);
+  const flows = await query(db, "select id from chat_flow where id in (?, ?)", [BACKEND_FLOW_ID, MOCKUP_FLOW_ID]);
   await new Promise((resolve) => db.close(resolve));
 
   if (!workspaces.length) {
@@ -139,12 +187,15 @@ async function main() {
         || pickModel(models, "embeddinggemma:latest", true, "embedding"),
     });
     if (process.env.FLOWISE_SKIP_UPSERT !== "1") await upsertDocuments();
+    await tagChunksWithCustomer();
   }
 
-  if (existing.has(WORKFLOW_FLOW_ID)) {
-    console.log(`Workflow canvas already present: ${WORKFLOW_FLOW_ID}`);
-  } else if (fs.existsSync(workflowPath)) {
-    run("import-flowise-json-to-db.js", [workflowPath, WORKFLOW_FLOW_ID], {});
+  // The 16-box placeholder canvas an earlier version imported is not a working flow; remove it.
+  if (existing.has(MOCKUP_FLOW_ID)) {
+    const cleanup = new sqlite3.Database(dbPath);
+    await query(cleanup, "delete from chat_flow where id = ?", [MOCKUP_FLOW_ID]);
+    await new Promise((resolve) => cleanup.close(resolve));
+    console.log(`Removed placeholder canvas: ${MOCKUP_FLOW_ID}`);
   }
 }
 

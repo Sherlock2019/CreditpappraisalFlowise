@@ -95,6 +95,8 @@ Two operations use the same nodes:
 - **Ingest:** `POST /api/v1/vector/upsert/{flow id}` loads the folder, chunks it, embeds each chunk with Ollama and writes it to PostgreSQL.
 - **Answer:** `POST /api/v1/prediction/{flow id}` embeds the question, retrieves the closest chunks from PostgreSQL and asks the chat model.
 
+Each chunk carries its customer id (`CUST-nnn`) in its metadata. FastAPI sends the selected customer as the Postgres metadata filter, so retrieval only returns that customer's documents.
+
 Flowise logs in to PostgreSQL with `POSTGRES_VECTORSTORE_USER` / `POSTGRES_VECTORSTORE_PASSWORD`, which `start-flowise.sh` sets.
 
 ## Who owns what
@@ -114,8 +116,7 @@ Flowise logs in to PostgreSQL with `POSTGRES_VECTORSTORE_USER` / `POSTGRES_VECTO
 
 | Flow | ID | Purpose |
 | --- | --- | --- |
-| Docfactor Credit Appraisal RAG Backend | `6f946e8b-2d35-4fd4-9ff9-158db1f0b820` | Runnable RAG flow: document loader, text splitter, Ollama embeddings, Postgres pgvector store, Ollama chat model, retrieval QA chain. FastAPI calls it. |
-| Docfactor Full Banking Workflow | `7a1d2c3e-5b4f-4c6d-8e9f-0a1b2c3d4e5f` | 16-stage reference canvas of the whole workflow. Not executable as a prediction. |
+| Docfactor Credit Appraisal RAG Workflow | `6f946e8b-2d35-4fd4-9ff9-158db1f0b820` | Runnable RAG flow: document loader, text splitter, Ollama embeddings, Postgres pgvector store, Ollama chat model, retrieval QA chain. FastAPI calls it. |
 
 ## Ports
 
