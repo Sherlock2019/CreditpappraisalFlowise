@@ -63,7 +63,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         headers["Host"] = backend.netloc
 
         connection_cls = http.client.HTTPSConnection if backend.scheme == "https" else http.client.HTTPConnection
-        connection = connection_cls(backend.hostname, backend.port or (443 if backend.scheme == "https" else 80), timeout=120)
+        connection = connection_cls(backend.hostname, backend.port or (443 if backend.scheme == "https" else 80), timeout=900)
         try:
             connection.request(self.command, target_path, body=body, headers=headers)
             response = connection.getresponse()
