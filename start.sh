@@ -5,10 +5,17 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 POC_DIR="${POC_DIR:-${APP_DIR}/bank-credit-ai-poc}"
 UI_DIR="${UI_DIR:-${APP_DIR}/creditappflowise}"
 WEB_PORT="${WEB_PORT:-8080}"
-BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:8000}"
-FASTAPI_URL="${FASTAPI_URL:-${BACKEND_URL}/docs}"
-FLOWISE_URL="${FLOWISE_URL:-http://127.0.0.1:${FLOWISE_PORT:-3001}}"
-STREAMLIT_URL="${STREAMLIT_URL:-http://127.0.0.1:8501}"
+BACKEND_PORT="${BACKEND_PORT:-8000}"
+STREAMLIT_PORT="${STREAMLIT_PORT:-8501}"
+FLOWISE_PORT="${FLOWISE_PORT:-3001}"
+POSTGRES_HOST_PORT="${POSTGRES_HOST_PORT:-5432}"
+# BACKEND_URL / FASTAPI_URL are derived after the ports are resolved unless set by the caller.
+BACKEND_URL="${BACKEND_URL:-}"
+FASTAPI_URL="${FASTAPI_URL:-}"
+# STACK_MODE: auto = Docker Compose, falling back to the local virtualenvs if Docker fails;
+# docker = Docker Compose only; local = local virtualenvs only.
+STACK_MODE="${STACK_MODE:-auto}"
+DOCKER_STACK_TIMEOUT="${DOCKER_STACK_TIMEOUT:-1800}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 PYTHON_VENV_DIR="${PYTHON_VENV_DIR:-${APP_DIR}/.venv}"
 INSTALL_REQUIREMENTS="${INSTALL_REQUIREMENTS:-1}"
@@ -58,22 +65,15 @@ print_urls() {
   echo ""
   echo "==================== Web App URLs ===================="
   echo "Credit Appraisal UI:  http://${PUBLIC_HOST}:${WEB_PORT}"
-  echo "Streamlit UI:         http://${PUBLIC_HOST}:8501"
-  echo "FastAPI Health:       http://${PUBLIC_HOST}:8000/health"
-  echo "FastAPI Swagger:      http://${PUBLIC_HOST}:8000/docs"
-  echo "Flowise UI:           http://${PUBLIC_HOST}:${FLOWISE_PORT:-3001}"
+  echo "Streamlit UI:         http://${PUBLIC_HOST}:${STREAMLIT_PORT}"
+  echo "FastAPI Health:       http://${PUBLIC_HOST}:${BACKEND_PORT}/health"
+  echo "FastAPI Swagger:      http://${PUBLIC_HOST}:${BACKEND_PORT}/docs"
+  echo "Flowise UI:           http://${PUBLIC_HOST}:${FLOWISE_PORT}"
   echo "======================================================"
 }
 
 cleanup() {
   print_urls
-  if [[ -n "${WEB_PID:-}" ]] && kill -0 "$WEB_PID" 2>/dev/null; then
-    kill "$WEB_PID" 2>/dev/null || true
-  fi
-  if [[ -n "${WEB_PID:-}" ]] && [[ -f "${APP_DIR}/web.pid" ]] && [[ "$(cat "${APP_DIR}/web.pid" 2>/dev/null || true)" == "$WEB_PID" ]]; then
-    rm -f "${APP_DIR}/web.pid"
-  fi
-
   true
 }
 
@@ -92,6 +92,45 @@ wait_for_url() {
   done
 
   echo "Warning: ${name} did not answer at ${url} yet."
+}
+
+port_in_use() {
+  local port="$1"
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltnH 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${port}\$"
+  else
+    (exec 3<>"/dev/tcp/127.0.0.1/${port}") 2>/dev/null
+  fi
+}
+
+# Print the first free TCP port at or above the requested one.
+free_port() {
+  local port="$1"
+  while port_in_use "$port"; do
+    port=$((port + 1))
+  done
+  echo "$port"
+}
+
+# Resolve a port for one of our services: keep it when it is free, otherwise move to the next
+# free port so another project listening there does not block or get mistaken for this stack.
+claim_port() {
+  local wanted="$1"
+  local name="$2"
+  local port
+  port="$(free_port "$wanted")"
+  if [[ "$port" != "$wanted" ]]; then
+    echo "Port ${wanted} is used by another process; ${name} will use port ${port} instead." >&2
+  fi
+  echo "$port"
+}
+
+is_flowise() {
+  curl --max-time 3 -fsS "http://127.0.0.1:${1}/api/v1/ping" 2>/dev/null | grep -qi pong
+}
+
+is_backend() {
+  curl --max-time 3 -fsS "http://127.0.0.1:${1}/health" >/dev/null 2>&1
 }
 
 preload_demo_dataset() {
@@ -286,126 +325,247 @@ ensure_docker_daemon() {
 ensure_python_requirements
 ensure_ollama
 
-if [[ "$START_STACK" != "0" ]]; then
-  if [[ ! -d "$POC_DIR" ]]; then
-    echo "POC directory not found: ${POC_DIR}"
-    exit 1
-  fi
-
-  if command -v docker >/dev/null 2>&1; then
-    if ! ensure_docker_daemon; then
-      cat <<EOF
-
-Docker is installed, but the daemon is not reachable.
-
-Automatic daemon startup is disabled or did not succeed. Start Docker manually,
-then retry:
-
-  sudo service docker start
-  ./start.sh
-
-If you use Docker Desktop, start Docker Desktop and enable WSL integration for
-this Ubuntu distro. To skip Docker entirely, run:
-
-  ./start-local.sh
-
-To disable automatic Docker daemon startup:
-
-  START_DOCKER_DAEMON=0 ./start.sh
-
-EOF
-      exit 1
-    fi
-
-    # .env is gitignored, so a fresh clone (e.g. on a server) only has .env.example
-    if [[ ! -f "${POC_DIR}/.env" && -f "${POC_DIR}/.env.example" ]]; then
-      echo "No .env found; creating ${POC_DIR}/.env from .env.example"
-      cp "${POC_DIR}/.env.example" "${POC_DIR}/.env"
-    fi
-
-    echo "Starting credit appraisal POC stack with Docker Compose..."
-    if [[ "$START_DOCKER_FLOWISE" == "1" ]]; then
-      COMPOSE_CMD=(docker compose --profile flowise up --build -d)
-    else
-      COMPOSE_CMD=(docker compose up --build -d)
-    fi
-
-    if ! (cd "$POC_DIR" && "${COMPOSE_CMD[@]}"); then
-      cat <<EOF
-
-Docker Compose failed. If Docker crashed with SIGBUS or a WSL integration error,
-restart Docker Desktop and WSL, then retry:
-
-  powershell.exe wsl --shutdown
-  ./start.sh
-
-Non-Docker fallback:
-
-  ./start-local.sh
-
-If the crash happens while pulling Flowise, run the default launcher without
-Docker Flowise:
-
-  START_DOCKER_FLOWISE=0 ./start.sh
-
-Then use Flowise later with:
-
-  START_DOCKER_FLOWISE=1 ./start.sh
-
-EOF
-      exit 1
-    fi
-  else
-    echo "Docker was not found. Install Docker or run with START_STACK=0 if services are already running."
-    echo "Continuing without Docker stack because services appear to be running manually."
-  fi
-else
-  echo "Skipping Docker Compose startup. Using existing services."
+if [[ "$START_STACK" != "0" ]] && [[ ! -d "$POC_DIR" ]]; then
+  echo "POC directory not found: ${POC_DIR}"
+  exit 1
 fi
 
-FLOWISE_PORT="${FLOWISE_PORT:-3001}"
-FLOWISE_URL="${FLOWISE_URL:-http://127.0.0.1:${FLOWISE_PORT}}"
+mkdir -p "${POC_DIR}/logs"
+
+# .env is gitignored, so a fresh clone (e.g. on a server) only has .env.example
+if [[ ! -f "${POC_DIR}/.env" && -f "${POC_DIR}/.env.example" ]]; then
+  echo "No .env found; creating ${POC_DIR}/.env from .env.example"
+  cp "${POC_DIR}/.env.example" "${POC_DIR}/.env"
+fi
+
+# --- Flowise -----------------------------------------------------------------
+# Started before the POC stack so a slow Docker build does not hold it back.
+FLOWISE_PID_FILE="${POC_DIR}/logs/flowise.pid"
+FLOWISE_PORT_FILE="${POC_DIR}/logs/flowise.port"
+FLOWISE_START_LOG="${POC_DIR}/logs/flowise-start.log"
 
 if [[ "$START_LOCAL_FLOWISE" == "1" ]]; then
+  OWN_FLOWISE_PORT=""
+  if [[ -f "$FLOWISE_PID_FILE" ]] && [[ -f "$FLOWISE_PORT_FILE" ]] \
+    && kill -0 "$(cat "$FLOWISE_PID_FILE" 2>/dev/null || echo 0)" 2>/dev/null; then
+    OWN_FLOWISE_PORT="$(cat "$FLOWISE_PORT_FILE" 2>/dev/null || true)"
+  fi
+
+  if [[ -n "$OWN_FLOWISE_PORT" ]]; then
+    FLOWISE_PORT="$OWN_FLOWISE_PORT"
+  elif ! is_flowise "$FLOWISE_PORT"; then
+    FLOWISE_PORT="$(claim_port "$FLOWISE_PORT" "Flowise")"
+  fi
+
+  # A cold Flowise start can take several minutes, so it loads in the background
+  # while the rest of the stack comes up.
   if [[ "$RESTART_LOCAL_FLOWISE" == "1" ]]; then
-    echo "Restarting local Flowise 3.1.2..."
-    if ! FLOWISE_PORT="$FLOWISE_PORT" RESTART_FLOWISE=1 "${APP_DIR}/start-flowise.sh"; then
-      echo "Warning: local Flowise did not restart. See ${POC_DIR}/logs/flowise.log"
-    fi
-  elif ! curl --max-time 2 -fsS "http://127.0.0.1:${FLOWISE_PORT}" >/dev/null 2>&1; then
-    echo "Starting local Flowise 3.1.2..."
-    if ! FLOWISE_PORT="$FLOWISE_PORT" "${APP_DIR}/start-flowise.sh"; then
-      echo "Warning: local Flowise did not start. See ${POC_DIR}/logs/flowise.log"
-    fi
+    echo "Restarting local Flowise 3.1.2 on port ${FLOWISE_PORT} in the background..."
+    FLOWISE_PORT="$FLOWISE_PORT" RESTART_FLOWISE=1 "${APP_DIR}/start-flowise.sh" >"$FLOWISE_START_LOG" 2>&1 &
+    FLOWISE_START_PID=$!
+  elif [[ -n "$OWN_FLOWISE_PORT" ]] && ! is_flowise "$FLOWISE_PORT"; then
+    echo "Local Flowise is still loading on port ${FLOWISE_PORT}."
+  elif ! is_flowise "$FLOWISE_PORT"; then
+    echo "Starting local Flowise 3.1.2 on port ${FLOWISE_PORT} in the background..."
+    FLOWISE_PORT="$FLOWISE_PORT" "${APP_DIR}/start-flowise.sh" >"$FLOWISE_START_LOG" 2>&1 &
+    FLOWISE_START_PID=$!
   else
     echo "Flowise already reachable at http://127.0.0.1:${FLOWISE_PORT}"
   fi
 fi
 
-echo "Starting launcher web UI on http://127.0.0.1:${WEB_PORT}..."
-if [[ -f "${APP_DIR}/web.pid" ]]; then
-  OLD_WEB_PID="$(cat "${APP_DIR}/web.pid" 2>/dev/null || true)"
-  if [[ -n "$OLD_WEB_PID" ]] && kill -0 "$OLD_WEB_PID" 2>/dev/null; then
-    echo "Stopping existing launcher web UI process ${OLD_WEB_PID}..."
-    kill "$OLD_WEB_PID" 2>/dev/null || true
-    sleep 1
+flowise_status() {
+  if [[ "$START_LOCAL_FLOWISE" != "1" ]]; then
+    echo "not started by this launcher"
+  elif is_flowise "$FLOWISE_PORT"; then
+    echo "ready"
+  elif [[ -f "$FLOWISE_PID_FILE" ]] && kill -0 "$(cat "$FLOWISE_PID_FILE" 2>/dev/null || echo 0)" 2>/dev/null; then
+    echo "still loading (a cold start can take several minutes), see ${POC_DIR}/logs/flowise.log"
+  elif [[ -n "${FLOWISE_START_PID:-}" ]] && kill -0 "$FLOWISE_START_PID" 2>/dev/null; then
+    echo "starting, see ${FLOWISE_START_LOG}"
+  else
+    echo "NOT running, see ${FLOWISE_START_LOG} and ${POC_DIR}/logs/flowise.log"
+  fi
+}
+
+# --- POC stack ports ---------------------------------------------------------
+# Host port already published by one of our containers, otherwise the next free one.
+stack_port() {
+  local container="$1"
+  local container_port="$2"
+  local wanted="$3"
+  local name="$4"
+  local current
+  current="$(docker port "$container" "${container_port}/tcp" 2>/dev/null | head -n1 | sed 's/.*://' || true)"
+  if [[ -n "$current" ]]; then
+    echo "$current"
+  else
+    claim_port "$wanted" "$name"
+  fi
+}
+
+USE_DOCKER=0
+if [[ "$START_STACK" != "0" ]] && [[ "$STACK_MODE" != "local" ]]; then
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker was not found."
+  elif ! ensure_docker_daemon; then
+    cat <<EOF
+
+Docker is installed, but the daemon is not reachable. Start it manually with
+"sudo service docker start" (or start Docker Desktop and enable WSL integration
+for this distro). To disable automatic Docker daemon startup:
+
+  START_DOCKER_DAEMON=0 ./start.sh
+
+EOF
+  elif [[ "$STACK_MODE" == "auto" ]] && [[ -x "${POC_DIR}/backend/.venv/bin/uvicorn" ]] && [[ -f "${POC_DIR}/.env.local" ]] \
+    && ! docker image inspect bank-credit-ai-poc-backend >/dev/null 2>&1; then
+    # The local environments are ready and the Docker images are not built yet: skip the long image build.
+    echo "Docker images are not built yet; using the existing local Python environments (STACK_MODE=docker forces Docker)."
+  else
+    USE_DOCKER=1
+  fi
+
+  if [[ "$USE_DOCKER" != "1" ]] && [[ "$STACK_MODE" == "docker" ]]; then
+    exit 1
   fi
 fi
-# detached (setsid/nohup) so the UI keeps running after Ctrl+C or logout
-setsid nohup "$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$WEB_PORT" --bind 0.0.0.0 --backend "$BACKEND_URL" --directory "$UI_DIR" >"${APP_DIR}/web.log" 2>&1 </dev/null &
-WEB_PID=$!
-echo "$WEB_PID" >"${APP_DIR}/web.pid"
 
-wait_for_url "http://127.0.0.1:${WEB_PORT}" "Launcher web UI" 20
-wait_for_url "${BACKEND_URL}/health" "FastAPI backend" 20
+if [[ "$USE_DOCKER" == "1" ]]; then
+  POSTGRES_HOST_PORT="$(stack_port credit_ai_postgres 5432 "$POSTGRES_HOST_PORT" "PostgreSQL")"
+  BACKEND_PORT="$(stack_port credit_ai_backend 8000 "$BACKEND_PORT" "FastAPI backend")"
+  STREAMLIT_PORT="$(stack_port credit_ai_frontend 8501 "$STREAMLIT_PORT" "Streamlit UI")"
+elif [[ "$START_STACK" != "0" ]] && ! is_backend "$BACKEND_PORT"; then
+  BACKEND_PORT="$(claim_port "$BACKEND_PORT" "FastAPI backend")"
+fi
+export FLOWISE_PORT BACKEND_PORT STREAMLIT_PORT POSTGRES_HOST_PORT
+
+# --- Launcher web UI ---------------------------------------------------------
+start_web_ui() {
+  if [[ -f "${APP_DIR}/web.pid" ]]; then
+    OLD_WEB_PID="$(cat "${APP_DIR}/web.pid" 2>/dev/null || true)"
+    if [[ -n "$OLD_WEB_PID" ]] && kill -0 "$OLD_WEB_PID" 2>/dev/null; then
+      echo "Stopping existing launcher web UI process ${OLD_WEB_PID}..."
+      kill "$OLD_WEB_PID" 2>/dev/null || true
+      sleep 1
+    fi
+  fi
+
+  WEB_PORT="$(claim_port "$WEB_PORT" "Launcher web UI")"
+  WEB_BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:${BACKEND_PORT}}"
+  echo "Starting launcher web UI on http://127.0.0.1:${WEB_PORT}..."
+  # detached (setsid/nohup) so the UI keeps running after Ctrl+C or logout
+  setsid nohup "$PYTHON_BIN" "${APP_DIR}/web_proxy.py" --port "$WEB_PORT" --bind 0.0.0.0 --backend "$WEB_BACKEND_URL" --directory "$UI_DIR" >"${APP_DIR}/web.log" 2>&1 </dev/null &
+  WEB_PID=$!
+  echo "$WEB_PID" >"${APP_DIR}/web.pid"
+  wait_for_url "http://127.0.0.1:${WEB_PORT}" "Launcher web UI" 20
+}
+
+start_web_ui
+
+# --- POC stack ---------------------------------------------------------------
+start_docker_stack() {
+  echo "Starting credit appraisal POC stack with Docker Compose..."
+  echo "The first image build can take several minutes; the launcher UI and Flowise are already up."
+  if [[ "$START_DOCKER_FLOWISE" == "1" ]]; then
+    COMPOSE_CMD=(docker compose --profile flowise up --build -d)
+  else
+    COMPOSE_CMD=(docker compose up --build -d)
+  fi
+
+  if (cd "$POC_DIR" && timeout --foreground "$DOCKER_STACK_TIMEOUT" "${COMPOSE_CMD[@]}"); then
+    return 0
+  fi
+
+  cat <<EOF
+
+Docker Compose failed or did not finish within ${DOCKER_STACK_TIMEOUT}s. If Docker
+crashed with SIGBUS or a WSL integration error, restart Docker Desktop and WSL
+(powershell.exe wsl --shutdown), then retry ./start.sh.
+
+EOF
+  return 1
+}
+
+start_local_stack() {
+  local backend_venv="${POC_DIR}/backend/.venv"
+  local frontend_venv="${POC_DIR}/frontend/.venv"
+  local local_env="${POC_DIR}/.env.local"
+
+  if [[ ! -x "${backend_venv}/bin/uvicorn" ]] || [[ ! -f "$local_env" ]]; then
+    echo "Local stack is not set up (missing ${backend_venv} or ${local_env})."
+    echo "Run ./start-local.sh once to install PostgreSQL and the Python environments."
+    return 1
+  fi
+
+  mkdir -p "${POC_DIR}/data/uploads"
+
+  if is_backend "$BACKEND_PORT"; then
+    echo "FastAPI backend already reachable at http://127.0.0.1:${BACKEND_PORT}"
+  else
+    local wanted_port="$BACKEND_PORT"
+    BACKEND_PORT="$(claim_port "$BACKEND_PORT" "FastAPI backend")"
+    echo "Starting local FastAPI backend on http://127.0.0.1:${BACKEND_PORT}..."
+    (
+      cd "${POC_DIR}/backend"
+      set -a
+      # shellcheck disable=SC1090,SC1091
+      [[ -f "${POC_DIR}/.env" ]] && source "${POC_DIR}/.env"
+      # shellcheck disable=SC1090
+      source "$local_env"
+      FLOWISE_API_URL="http://localhost:${FLOWISE_PORT}"
+      BACKEND_URL="http://localhost:${BACKEND_PORT}"
+      set +a
+      exec setsid nohup "${backend_venv}/bin/uvicorn" app.main:app --host 0.0.0.0 --port "$BACKEND_PORT"
+    ) >"${POC_DIR}/logs/backend.log" 2>&1 </dev/null &
+    echo "$!" >"${POC_DIR}/logs/backend.pid"
+    if [[ "$BACKEND_PORT" != "$wanted_port" ]]; then
+      start_web_ui
+    fi
+  fi
+
+  if curl --max-time 3 -fsS "http://127.0.0.1:${STREAMLIT_PORT}/_stcore/health" >/dev/null 2>&1; then
+    echo "Streamlit UI already reachable at http://127.0.0.1:${STREAMLIT_PORT}"
+  elif [[ -x "${frontend_venv}/bin/streamlit" ]]; then
+    STREAMLIT_PORT="$(claim_port "$STREAMLIT_PORT" "Streamlit UI")"
+    echo "Starting local Streamlit UI on http://127.0.0.1:${STREAMLIT_PORT}..."
+    (
+      cd "${POC_DIR}/frontend"
+      export BACKEND_URL="http://localhost:${BACKEND_PORT}"
+      exec setsid nohup "${frontend_venv}/bin/streamlit" run streamlit_app.py --server.address=0.0.0.0 --server.port "$STREAMLIT_PORT" --server.headless true
+    ) >"${POC_DIR}/logs/frontend.log" 2>&1 </dev/null &
+    echo "$!" >"${POC_DIR}/logs/frontend.pid"
+  else
+    echo "Warning: ${frontend_venv} not found; skipping the Streamlit UI."
+  fi
+}
+
+STACK_RUNNING="existing services"
+if [[ "$START_STACK" == "0" ]]; then
+  echo "Skipping POC stack startup. Using existing services."
+elif [[ "$USE_DOCKER" == "1" ]] && start_docker_stack; then
+  STACK_RUNNING="Docker Compose"
+elif [[ "$STACK_MODE" == "docker" ]]; then
+  exit 1
+else
+  echo "Starting the POC stack from the local Python environments instead of Docker..."
+  if start_local_stack; then
+    STACK_RUNNING="local Python environments"
+  else
+    echo "Warning: the FastAPI backend and Streamlit UI were not started."
+  fi
+fi
+
+BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:${BACKEND_PORT}}"
+FASTAPI_URL="${FASTAPI_URL:-${BACKEND_URL}/docs}"
+
+wait_for_url "${BACKEND_URL}/health" "FastAPI backend" 45
 preload_demo_dataset
 
 if [[ "$OPEN_BROWSER" == "1" ]]; then
   open_url "http://127.0.0.1:${WEB_PORT}"
-  if [[ "$OPEN_FASTAPI" == "1" ]]; then
-    open_url "$FASTAPI_URL"
-  fi
-elif [[ "$OPEN_FASTAPI" == "1" ]]; then
+fi
+if [[ "$OPEN_FASTAPI" == "1" ]]; then
   open_url "$FASTAPI_URL"
 fi
 
@@ -413,18 +573,27 @@ cat <<EOF
 
 Ready.
 Credit Appraisal UI:  http://${PUBLIC_HOST}:${WEB_PORT}
-Streamlit UI:         http://${PUBLIC_HOST}:8501
-FastAPI Health:       http://${PUBLIC_HOST}:8000/health
-FastAPI Swagger:      http://${PUBLIC_HOST}:8000/docs
-Flowise UI:           http://${PUBLIC_HOST}:${FLOWISE_PORT:-3001}
+Streamlit UI:         http://${PUBLIC_HOST}:${STREAMLIT_PORT}
+FastAPI Health:       http://${PUBLIC_HOST}:${BACKEND_PORT}/health
+FastAPI Swagger:      http://${PUBLIC_HOST}:${BACKEND_PORT}/docs
+Flowise UI:           http://${PUBLIC_HOST}:${FLOWISE_PORT}
+
+POC stack: ${STACK_RUNNING}
+Flowise:   $(flowise_status)
 
 Logs:
   ${APP_DIR}/web.log
+  ${POC_DIR}/logs/flowise.log
+  ${POC_DIR}/logs/backend.log and frontend.log (local stack only)
   UI directory: ${UI_DIR}
 
 Everything keeps running in the background after this script exits.
 Stop the launcher web server with: kill \$(cat ${APP_DIR}/web.pid)
-Use "docker compose down" in ${POC_DIR} to stop the POC stack.
+Stop a local stack with: kill \$(cat ${POC_DIR}/logs/backend.pid ${POC_DIR}/logs/frontend.pid)
+Stop Flowise with: kill \$(cat ${POC_DIR}/logs/flowise.pid)
+Use "docker compose down" in ${POC_DIR} to stop the Docker POC stack.
+A port that is already taken by another program is replaced by the next free one.
+STACK_MODE=local skips Docker; STACK_MODE=docker disables the local fallback.
 Flowise Docker image is skipped by default. Use START_DOCKER_FLOWISE=1 to include it.
 Local Flowise is started by default. Use START_LOCAL_FLOWISE=0 to skip it.
 Docker daemon startup is attempted by default. Use START_DOCKER_DAEMON=0 to skip it.
@@ -432,7 +601,3 @@ Ollama startup is attempted by default. Use START_OLLAMA=0 to skip it.
 Python requirements install is enabled by default. Use INSTALL_REQUIREMENTS=0 to skip it.
 Demo customer document preload is enabled by default. Use PRELOAD_DEMO_DATASET=0 to skip it.
 EOF
-
-if [[ "$OPEN_BROWSER" == "1" ]] && command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "http://127.0.0.1:${WEB_PORT}" >/dev/null 2>&1 || true
-fi

@@ -41,9 +41,20 @@ if [[ "$RESTART_FLOWISE" == "1" ]]; then
   sleep 2
 fi
 
-if [[ "$RESTART_FLOWISE" != "1" ]] && curl --max-time 2 -fsS "http://127.0.0.1:${FLOWISE_PORT}" >/dev/null 2>&1; then
+# Ping the Flowise API rather than the bare port, so another app listening there is not mistaken for Flowise.
+flowise_ready() {
+  curl --max-time 3 -fsS "http://127.0.0.1:${FLOWISE_PORT}/api/v1/ping" 2>/dev/null | grep -qi pong
+}
+
+if [[ "$RESTART_FLOWISE" != "1" ]] && flowise_ready; then
   echo "Flowise is already reachable at http://127.0.0.1:${FLOWISE_PORT}"
   exit 0
+fi
+
+if command -v ss >/dev/null 2>&1 && ss -ltnH 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${FLOWISE_PORT}\$"; then
+  echo "Port ${FLOWISE_PORT} is already used by another process that is not Flowise."
+  echo "Stop it, or choose another port: FLOWISE_PORT=3002 ./start-flowise.sh"
+  exit 1
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
@@ -71,11 +82,12 @@ echo "Log: ${POC_DIR}/logs/flowise.log"
 cd "$POC_DIR"
 nohup setsid env PORT="$FLOWISE_PORT" DATABASE_PATH="$FLOWISE_HOME" "$LOCAL_FLOWISE_BIN" start >"${POC_DIR}/logs/flowise.log" 2>&1 &
 FLOWISE_PID=$!
+echo "$FLOWISE_PID" >"${POC_DIR}/logs/flowise.pid"
+echo "$FLOWISE_PORT" >"${POC_DIR}/logs/flowise.port"
 
-for _ in $(seq 1 90); do
-  if curl --max-time 2 -fsS "http://127.0.0.1:${FLOWISE_PORT}" >/dev/null 2>&1; then
+for _ in $(seq 1 "${FLOWISE_START_TIMEOUT:-900}"); do
+  if flowise_ready; then
     echo "Flowise ready: http://127.0.0.1:${FLOWISE_PORT}"
-    echo "$FLOWISE_PID" >"${POC_DIR}/logs/flowise.pid"
     exit 0
   fi
   if ! kill -0 "$FLOWISE_PID" 2>/dev/null; then

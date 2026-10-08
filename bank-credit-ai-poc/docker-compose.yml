@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: credit_ai_user
       POSTGRES_PASSWORD: credit_ai_password
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -18,13 +18,13 @@ services:
     env_file:
       - .env
     environment:
-      FLOWISE_API_URL: http://host.docker.internal:3001
+      FLOWISE_API_URL: http://host.docker.internal:${FLOWISE_PORT:-3001}
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       DEMO_CUSTOMER_DOCUMENTS_DIR: /app/demo/customer_documents
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       - postgres
     volumes:
@@ -37,7 +37,7 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
     ports:
-      - "8501:8501"
+      - "${STREAMLIT_PORT:-8501}:8501"
     depends_on:
       - backend
 
