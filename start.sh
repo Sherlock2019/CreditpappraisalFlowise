@@ -375,14 +375,14 @@ if [[ "$START_LOCAL_FLOWISE" == "1" ]]; then
   fi
 fi
 
-# Flow that FastAPI calls through /api/v1/prediction/<id>; seeded by scripts/ensure-flowise-flows.js.
-# FLOWISE_FLOW=agentflow switches to the credit appraisal Agentflow (scripts/seed-flowise-agentflow.js).
-FLOWISE_FLOW="${FLOWISE_FLOW:-chatflow}"
-if [[ "$FLOWISE_FLOW" == "agentflow" ]]; then
-  DEFAULT_FLOWISE_CHATFLOW_ID="b3c1d7e2-4a5f-4e8b-9c6d-2f1a0e9d8c7b"
-else
-  DEFAULT_FLOWISE_CHATFLOW_ID="6f946e8b-2d35-4fd4-9ff9-158db1f0b820"
+# Flows FastAPI calls through /api/v1/prediction/<id>; seeded by scripts/ensure-flowise-flows.js.
+# /chat (LISA) uses the RAG chatflow. POST /api/v1/agents/execute uses the governed Agentflow, which
+# only runs with the run id and agent tokens FastAPI supplies, so it is never used for /chat.
+if [[ "${FLOWISE_FLOW:-}" == "agentflow" ]]; then
+  echo "Note: FLOWISE_FLOW=agentflow is no longer needed; the Agentflow is always available at POST /api/v1/agents/execute."
 fi
+DEFAULT_FLOWISE_CHATFLOW_ID="6f946e8b-2d35-4fd4-9ff9-158db1f0b820"
+DEFAULT_FLOWISE_AGENTFLOW_ID="b3c1d7e2-4a5f-4e8b-9c6d-2f1a0e9d8c7b"
 
 # Once Flowise answers, add the credit appraisal flows if its database does not have them yet.
 if [[ "$START_LOCAL_FLOWISE" == "1" ]] && command -v node >/dev/null 2>&1; then
@@ -540,6 +540,7 @@ start_local_stack() {
       source "$local_env"
       FLOWISE_API_URL="http://localhost:${FLOWISE_PORT}"
       FLOWISE_CHATFLOW_ID="${FLOWISE_CHATFLOW_ID:-$DEFAULT_FLOWISE_CHATFLOW_ID}"
+      FLOWISE_AGENTFLOW_ID="${FLOWISE_AGENTFLOW_ID:-$DEFAULT_FLOWISE_AGENTFLOW_ID}"
       BACKEND_URL="http://localhost:${BACKEND_PORT}"
       set +a
       exec setsid nohup "${backend_venv}/bin/uvicorn" app.main:app --host 0.0.0.0 --port "$BACKEND_PORT"

@@ -128,6 +128,12 @@ async function tagChunksWithCustomer() {
         where metadata->>'source' ~ 'CUST-[0-9]+' and not (metadata ? 'customer')`
     );
     console.log(`Tagged ${result.rowCount} chunks with their customer id.`);
+    // FastAPI's /chat filter is {customer, tenant_id}; chunks loaded before tenants existed get the default tenant.
+    const tenant = await client.query(
+      `update ${RAG_TABLE} set metadata = metadata || jsonb_build_object('tenant_id', $1::text) where not (metadata ? 'tenant_id')`,
+      [process.env.FLOWISE_RAG_TENANT_ID || "demo"]
+    );
+    console.log(`Tagged ${tenant.rowCount} chunks with a tenant id.`);
   } catch (error) {
     console.log(`Could not tag chunks with customer ids: ${error.message}`);
   } finally {

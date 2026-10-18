@@ -22,6 +22,7 @@ bank-credit-ai-poc/frontend/.venv/
 bank-credit-ai-poc/logs/
 bank-credit-ai-poc/data/uploads/
 bank-credit-ai-poc/flowise/.flowise/
+bank-credit-ai-poc/flowise/backups/
 
 *.sqlite
 *.sqlite3

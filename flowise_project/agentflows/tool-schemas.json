@@ -1,0 +1,328 @@
+{
+  "approval.request": {
+    "additionalProperties": false,
+    "properties": {
+      "conditions": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 50,
+        "title": "Conditions",
+        "type": "array"
+      },
+      "customer_id": {
+        "exclusiveMinimum": 0,
+        "title": "Customer Id",
+        "type": "integer"
+      },
+      "evidence_ids": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 200,
+        "title": "Evidence Ids",
+        "type": "array"
+      },
+      "memo": {
+        "default": "",
+        "maxLength": 40000,
+        "title": "Memo",
+        "type": "string"
+      },
+      "policy_score_id": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Policy Score Id"
+      },
+      "proposed_amount": {
+        "default": 0,
+        "minimum": 0.0,
+        "title": "Proposed Amount",
+        "type": "number"
+      },
+      "proposed_rate_pct": {
+        "default": 0,
+        "maximum": 100.0,
+        "minimum": 0.0,
+        "title": "Proposed Rate Pct",
+        "type": "number"
+      },
+      "reason_summary": {
+        "default": "",
+        "maxLength": 4000,
+        "title": "Reason Summary",
+        "type": "string"
+      },
+      "recommendation": {
+        "enum": [
+          "approved",
+          "conditional",
+          "rejected",
+          "request_more_info",
+          "deferred"
+        ],
+        "title": "Recommendation",
+        "type": "string"
+      }
+    },
+    "required": [
+      "customer_id",
+      "recommendation"
+    ],
+    "title": "ApprovalRequestInput",
+    "type": "object"
+  },
+  "audit.write": {
+    "additionalProperties": false,
+    "properties": {
+      "customer_id": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Customer Id"
+      },
+      "details": {
+        "title": "Details",
+        "type": "object"
+      },
+      "event_type": {
+        "pattern": "^[a-z][a-z0-9_]{2,63}$",
+        "title": "Event Type",
+        "type": "string"
+      }
+    },
+    "required": [
+      "event_type"
+    ],
+    "title": "AuditEventInput",
+    "type": "object"
+  },
+  "email.draft": {
+    "additionalProperties": false,
+    "properties": {
+      "approval_id": {
+        "title": "Approval Id",
+        "type": "string"
+      },
+      "customer_email": {
+        "default": "customer-on-file@example.invalid",
+        "maxLength": 320,
+        "title": "Customer Email",
+        "type": "string"
+      },
+      "language": {
+        "default": "en",
+        "maxLength": 8,
+        "title": "Language",
+        "type": "string"
+      }
+    },
+    "required": [
+      "approval_id"
+    ],
+    "title": "EmailDraftInput",
+    "type": "object"
+  },
+  "evidence.search": {
+    "additionalProperties": false,
+    "properties": {
+      "customer_id": {
+        "description": "Must equal the customer bound to the agent token",
+        "exclusiveMinimum": 0,
+        "title": "Customer Id",
+        "type": "integer"
+      },
+      "domain": {
+        "enum": [
+          "credit",
+          "asset",
+          "legal",
+          "fraud",
+          "qa"
+        ],
+        "title": "Domain",
+        "type": "string"
+      },
+      "question": {
+        "maxLength": 4000,
+        "minLength": 1,
+        "title": "Question",
+        "type": "string"
+      },
+      "top_k": {
+        "default": 6,
+        "maximum": 20,
+        "minimum": 1,
+        "title": "Top K",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "customer_id",
+      "question",
+      "domain"
+    ],
+    "title": "EvidenceSearchInput",
+    "type": "object"
+  },
+  "policy.score": {
+    "properties": {
+      "annual_interest_rate": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Annual Interest Rate"
+      },
+      "assessment_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Assessment Id"
+      },
+      "collateral_value": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": 0,
+        "title": "Collateral Value"
+      },
+      "customer_id": {
+        "title": "Customer Id",
+        "type": "string"
+      },
+      "evidence": {
+        "items": {
+          "type": "object"
+        },
+        "title": "Evidence",
+        "type": "array"
+      },
+      "fraud_indicators": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Fraud Indicators",
+        "type": "array"
+      },
+      "loan_amount": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": 0,
+        "title": "Loan Amount"
+      },
+      "missing_documents": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Missing Documents",
+        "type": "array"
+      },
+      "monthly_debt": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Monthly Debt"
+      },
+      "monthly_debt_payments": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Monthly Debt Payments"
+      },
+      "monthly_income": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": 0,
+        "title": "Monthly Income"
+      },
+      "policy_mode": {
+        "default": "standard_credit_policy",
+        "title": "Policy Mode",
+        "type": "string"
+      },
+      "session_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Session Id"
+      },
+      "term_months": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": 60,
+        "title": "Term Months"
+      }
+    },
+    "required": [
+      "customer_id"
+    ],
+    "title": "LoanPolicyRequest",
+    "type": "object"
+  }
+}

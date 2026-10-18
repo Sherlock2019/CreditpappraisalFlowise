@@ -14,16 +14,21 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 const sqlite3 = require("../.tools/flowise-3.1.2/node_modules/sqlite3");
 
-// Agentflow called by FastAPI when start.sh runs with FLOWISE_FLOW=agentflow.
+// Agentflow called by FastAPI's POST /api/v1/agents/execute (FLOWISE_AGENTFLOW_ID).
 const AGENTFLOW_ID = "b3c1d7e2-4a5f-4e8b-9c6d-2f1a0e9d8c7b";
 const AGENTFLOW_NAME = "Docfactor Credit Appraisal Agent · Local Dev";
-// Case data FastAPI may override per request (overrideConfig.vars).
-const OVERRIDABLE_VARS = [
-  "customer_id", "session_id", "loan_amount", "collateral_value",
-  "monthly_income", "monthly_debt_payments", "term_months", "officer_id",
-];
 
 const root = path.join(__dirname, "..");
+const permissions = require(path.join(root, "bank-credit-ai-poc", "backend", "app", "auth", "agent_permissions.json"));
+// Run context FastAPI sends per request (overrideConfig.vars). Flowise drops any var not listed here,
+// so fastapi_base_url can never be redirected by a caller.
+const OVERRIDABLE_VARS = [
+  "run_id", "tenant_id", "correlation_id", "requested_by", "customer_id", "session_id",
+  "loan_amount", "collateral_value", "monthly_income", "monthly_debt_payments", "term_months",
+  ...Object.keys(permissions.agents).map((agent) => `agent_token_${agent}`),
+];
+// Flows generated before the tool gateway call the unversioned endpoints; they are upgraded on seed.
+const GATEWAY_MARKER = "/api/v1/tools/";
 const dbPath = path.join(root, "bank-credit-ai-poc", "flowise", ".flowise", "database.sqlite");
 const generator = path.join(root, "flowise_project", "agentflows", "build-agentflows.js");
 const generatedFlow = path.join(root, "flowise_project", "agentflows", "generated", "docfactor-credit-appraisal-agentflow-local-dev.json");
@@ -81,12 +86,28 @@ async function main() {
 
     // The FastAPI URL follows the port start.sh picked, so refresh it on every launch.
     await upsertVariable(db, workspace.id, "fastapi_base_url", fastapiBaseUrl, true);
-    await upsertVariable(db, workspace.id, "officer_id", "credit-officer", false);
 
-    const [existing] = await query(db, "select id from chat_flow where id = ?", [AGENTFLOW_ID]);
-    if (existing && process.env.FLOWISE_RESEED !== "1") {
-      console.log(`Agentflow already present: ${AGENTFLOW_ID} (fastapi_base_url=${fastapiBaseUrl})`);
+    const apiConfig = JSON.stringify({
+      overrideConfig: {
+        status: true,
+        nodes: {},
+        variables: OVERRIDABLE_VARS.map((name) => ({ id: name, name, type: "static", enabled: true })),
+      },
+    });
+    const [existing] = await query(db, "select id, flowData from chat_flow where id = ?", [AGENTFLOW_ID]);
+    const preGateway = existing && !String(existing.flowData || "").includes(GATEWAY_MARKER);
+    if (existing && !preGateway && process.env.FLOWISE_RESEED !== "1") {
+      // Keep canvas edits, but always refresh the variable allow-list so new agent identities reach the flow.
+      await query(db, "update chat_flow set apiConfig = ?, updatedDate = ? where id = ?", [apiConfig, new Date().toISOString(), AGENTFLOW_ID]);
+      console.log(`Agentflow already present: ${AGENTFLOW_ID} (fastapi_base_url=${fastapiBaseUrl}); variable allow-list refreshed.`);
       return;
+    }
+    if (preGateway) {
+      const backupDir = path.join(root, "bank-credit-ai-poc", "flowise", "backups");
+      fs.mkdirSync(backupDir, { recursive: true });
+      const backupFile = path.join(backupDir, `agentflow-${AGENTFLOW_ID}-${Date.now()}.json`);
+      fs.writeFileSync(backupFile, existing.flowData);
+      console.log(`Upgrading the pre-gateway Agentflow to the tool-gateway version; previous graph saved to ${backupFile}`);
     }
 
     const model = await toolCallingModel();
@@ -97,13 +118,6 @@ async function main() {
     if (result.status !== 0) throw new Error(`build-agentflows.js failed with exit code ${result.status}`);
 
     const flowData = fs.readFileSync(generatedFlow, "utf8");
-    const apiConfig = JSON.stringify({
-      overrideConfig: {
-        status: true,
-        nodes: {},
-        variables: OVERRIDABLE_VARS.map((name) => ({ id: name, name, type: "static", enabled: true })),
-      },
-    });
     const now = new Date().toISOString();
     await query(
       db,
