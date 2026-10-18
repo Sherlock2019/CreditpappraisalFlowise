@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.audit import log_event
+from app.auth.dependencies import legacy_principal
+from app.auth.principal import Principal
 from app.database import get_db
 from app.flowise_compat import ensure_customer
 from app.policy.loan_policy import score_loan_policy
@@ -150,8 +152,17 @@ def submit_to_approval_committee(
 def record_final_decision(
     payload: schemas.FinalDecisionRequest,
     db: Session = Depends(get_db),
+    principal: Principal = Depends(legacy_principal),
 ) -> schemas.FinalDecisionResponse:
-    decision_by = payload.decision_by or payload.decided_by
+    if principal.is_agent:
+        raise HTTPException(status_code=403, detail="AI agents cannot record credit decisions. Use POST /api/v1/approvals/{id}/decision as a human.")
+    if principal.is_human:
+        if "approval:decide" not in principal.permissions:
+            raise HTTPException(status_code=403, detail="Missing permission approval:decide")
+        # With a token, the decider is the authenticated officer, whatever the body says.
+        decision_by = principal.subject
+    else:
+        decision_by = payload.decision_by or payload.decided_by
     if not decision_by:
         raise HTTPException(status_code=400, detail="decided_by or decision_by is required. LLM-only final decisions are not allowed.")
     case_id = _parse_prefixed_id(payload.committee_case_id, "COM")

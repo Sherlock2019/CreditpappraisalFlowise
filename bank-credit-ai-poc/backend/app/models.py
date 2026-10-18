@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,6 +16,7 @@ class Customer(Base):
     customer_type: Mapped[str | None] = mapped_column(Text)
     industry: Mapped[str | None] = mapped_column(Text)
     country: Mapped[str | None] = mapped_column(Text)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False, default="demo", server_default="demo", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     documents: Mapped[list["Document"]] = relationship(back_populates="customer")
@@ -180,3 +181,80 @@ class DecisionEmailDraft(Base):
     send_allowed: Mapped[bool] = mapped_column(Boolean, default=False)
     requires_human_approval: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+# JSONB on PostgreSQL, plain JSON elsewhere (the unit tests run on SQLite).
+PortableJSON = JSON().with_variant(JSONB(), "postgresql")
+
+
+class AgentRun(Base):
+    """One governed execution of the credit appraisal Agentflow. FastAPI owns this state; Flowise owns the reasoning."""
+
+    __tablename__ = "agent_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
+    requested_by: Mapped[str] = mapped_column(Text, nullable=False)
+    # running -> awaiting_approval -> resuming -> completed | failed
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="running")
+    flow_id: Mapped[str] = mapped_column(Text, nullable=False)
+    chat_id: Mapped[str] = mapped_column(Text, nullable=False)
+    correlation_id: Mapped[str] = mapped_column(Text, nullable=False)
+    idempotency_key: Mapped[str | None] = mapped_column(Text)
+    request: Mapped[dict] = mapped_column(PortableJSON, nullable=False, default=dict)
+    result: Mapped[dict] = mapped_column(PortableJSON, nullable=False, default=dict)
+    human_input_node_id: Mapped[str | None] = mapped_column(Text)
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("uq_agent_runs_tenant_idempotency", "tenant_id", "idempotency_key", unique=True),)
+
+
+class Approval(Base):
+    """Human approval gate. Only an authenticated human with approval:decide can move it out of pending."""
+
+    __tablename__ = "approvals"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("agent_runs.id", ondelete="CASCADE"), nullable=False, index=True)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"), nullable=False)
+    # pending -> approved | conditional | rejected | deferred | expired
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    requested_by_agent: Mapped[str] = mapped_column(Text, nullable=False)
+    run_requested_by: Mapped[str] = mapped_column(Text, nullable=False)
+    recommendation: Mapped[dict] = mapped_column(PortableJSON, nullable=False, default=dict)
+    policy_score_id: Mapped[int | None] = mapped_column(Integer)
+    evidence_ids: Mapped[list] = mapped_column(PortableJSON, nullable=False, default=list)
+    approved_amount: Mapped[float | None] = mapped_column(Float)
+    approved_rate_pct: Mapped[float | None] = mapped_column(Float)
+    conditions: Mapped[list] = mapped_column(PortableJSON, nullable=False, default=list)
+    decision_notes: Mapped[str | None] = mapped_column(Text)
+    decided_by: Mapped[str | None] = mapped_column(Text)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    final_decision_id: Mapped[int | None] = mapped_column(Integer)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class AuditEvent(Base):
+    """Tamper-evident audit trail: each row hashes the previous row of the same tenant."""
+
+    __tablename__ = "audit_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[str] = mapped_column(Text, nullable=False)
+    event_type: Mapped[str] = mapped_column(Text, nullable=False)
+    actor: Mapped[str] = mapped_column(Text, nullable=False)
+    actor_kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    customer_id: Mapped[int | None] = mapped_column(Integer)
+    run_id: Mapped[str | None] = mapped_column(Text)
+    correlation_id: Mapped[str | None] = mapped_column(Text)
+    details: Mapped[dict] = mapped_column(PortableJSON, nullable=False, default=dict)
+    occurred_at: Mapped[str] = mapped_column(Text, nullable=False)
+    prev_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+
+    __table_args__ = (Index("ix_audit_events_tenant_id_id", "tenant_id", "id"),)

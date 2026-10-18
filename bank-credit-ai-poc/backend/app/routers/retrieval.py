@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app import crud
 from app.database import get_db
 from app.flowise_compat import ensure_customer, external_document_id
-from app.services.retrieval_service import retrieve_customer_context
+from app.services.retrieval_service import missing_documents_from_context, retrieve_customer_context
 
 router = APIRouter(tags=["retrieval"])
 
@@ -20,21 +20,6 @@ class RetrievalQueryRequest(BaseModel):
     question: str
     top_k: int = Field(default=8, ge=1, le=20)
     filters: dict[str, Any] = Field(default_factory=dict)
-
-
-def _missing_documents_from_context(context: dict[str, Any]) -> list[str]:
-    text = f"{context.get('context', '')} {context.get('question', '')}".lower()
-    required = {
-        "financial statements": ["financial", "statement"],
-        "tax returns": ["tax"],
-        "bank statements": ["bank"],
-        "collateral valuation": ["collateral", "valuation"],
-    }
-    missing: list[str] = []
-    for label, markers in required.items():
-        if not any(marker in text for marker in markers):
-            missing.append(label)
-    return missing
 
 
 @router.post("/retrieval/query")
@@ -67,5 +52,5 @@ def retrieval_query(payload: RetrievalQueryRequest, db: Session = Depends(get_db
         "session_id": payload.session_id,
         "filters": payload.filters,
         "evidence": evidence,
-        "missing_documents": _missing_documents_from_context(context),
+        "missing_documents": missing_documents_from_context(context),
     }

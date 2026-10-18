@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS customers (
     customer_type TEXT,
     industry TEXT,
     country TEXT,
+    tenant_id TEXT NOT NULL DEFAULT 'demo',
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -143,6 +144,8 @@ CREATE TABLE IF NOT EXISTS decision_email_drafts (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL DEFAULT 'demo';
+CREATE INDEX IF NOT EXISTS ix_customers_tenant_id ON customers(tenant_id);
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS source_type TEXT DEFAULT 'manual_upload';
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS source_uri TEXT;
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS external_document_id TEXT;

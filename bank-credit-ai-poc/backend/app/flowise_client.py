@@ -113,6 +113,7 @@ async def call_flowise_chat(
     llm_model: str | None = None,
     workflow_context: dict[str, Any] | None = None,
     customer_name: str | None = None,
+    tenant_id: str | None = None,
 ) -> dict[str, str]:
     settings = get_settings()
     if not settings.flowise_chatflow_id:
@@ -131,7 +132,8 @@ async def call_flowise_chat(
 
     request = FlowisePredictionRequest(
         question=_build_flowise_question(question, customer_id, context, runtime_vars),
-        metadata_filter={"customer": customer_name} if customer_name else None,
+        # pgvector jsonb containment: chunks must match both the customer and the caller's tenant.
+        metadata_filter={"customer": customer_name, "tenant_id": tenant_id or settings.default_tenant_id} if customer_name else None,
         vars=FlowiseRuntimeVars(
             customer_id=str(customer_id),
             llm_provider=llm_provider,

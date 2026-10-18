@@ -77,6 +77,37 @@ class Settings(BaseSettings):
     cloud_storage_bucket: str | None = None
     cloud_storage_prefix: str | None = None
 
+    # Origins allowed to call the API from a browser. The LISA UI goes through web_proxy.py (same origin).
+    cors_allow_origins: str = (
+        "http://localhost:8501,http://127.0.0.1:8501,http://localhost:3000,http://127.0.0.1:3000,"
+        "http://localhost:3001,http://127.0.0.1:3001,http://localhost:8080,http://127.0.0.1:8080,"
+        "http://localhost:5173,http://127.0.0.1:5173"
+    )
+
+    # Human identity: OpenID Connect (Keycloak in local dev). /api/v1 always requires a token.
+    oidc_issuer: str = ""
+    oidc_audience: str = "credit-ai-api"
+    oidc_jwks_url: str = ""
+    oidc_tenant_claim: str = "tenant_id"
+    # Dev-only HS256 issuer for tests and demos without Keycloak. Never enable outside a laptop.
+    auth_dev_mode: bool = False
+    auth_dev_jwt_secret: str = ""
+    auth_dev_issuer: str = "credit-ai-dev"
+    # Unversioned legacy routes used by LISA/Streamlit: "dev-anonymous" keeps them open locally,
+    # "required" makes /chat and /final-decision demand a human token.
+    legacy_auth_mode: str = "dev-anonymous"
+    default_tenant_id: str = "demo"
+
+    # Agent runtime identity: short-lived, run-bound tokens minted by FastAPI for each Flowise agent.
+    agent_token_secret: str = ""
+    agent_token_ttl_seconds: int = 900
+
+    # Governed Agentflow called by /api/v1/agents/execute (FLOWISE_CHATFLOW_ID stays the /chat flow).
+    flowise_agentflow_id: str = "b3c1d7e2-4a5f-4e8b-9c6d-2f1a0e9d8c7b"
+    flowise_agentflow_timeout_seconds: float = 900
+    approval_ttl_hours: int = 48
+    approval_require_four_eyes: bool = True
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

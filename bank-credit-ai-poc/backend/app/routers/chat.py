@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.audit import log_event
+from app.auth.dependencies import legacy_principal
+from app.auth.principal import Principal
 from app.config import get_settings
 from app.flowise_client import call_flowise_chat
 from app.llm import build_credit_messages, call_llm
@@ -66,10 +68,14 @@ Human credit officer review required.
 
 
 @router.post("/chat", response_model=schemas.ChatResponse)
-async def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db)) -> schemas.ChatResponse:
+async def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db), principal: Principal = Depends(legacy_principal)) -> schemas.ChatResponse:
+    if principal.is_agent:
+        raise HTTPException(status_code=403, detail="Agents use /api/v1/tools, not /chat")
+    if principal.is_human and "customer:read" not in principal.permissions:
+        raise HTTPException(status_code=403, detail="Missing permission customer:read")
     all_customers = payload.customer_id is None or payload.customer_id <= 0
     customer = None if all_customers else crud.get_customer(db, payload.customer_id)
-    if not all_customers and not customer:
+    if not all_customers and (not customer or customer.tenant_id != principal.tenant_id):
         raise HTTPException(status_code=404, detail="Customer not found")
 
     provider = normalize_provider(payload.llm_provider)
@@ -97,7 +103,7 @@ async def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db)) -> s
         db.refresh(session)
         session_id = session.id
 
-    chunks = retrieve_relevant_chunks_all_customers(db, payload.message) if all_customers else retrieve_relevant_chunks(db, payload.customer_id, payload.message)
+    chunks = retrieve_relevant_chunks_all_customers(db, payload.message, tenant_id=principal.tenant_id) if all_customers else retrieve_relevant_chunks(db, payload.customer_id, payload.message)
     context = build_context(chunks)
     citations = citations_from_chunks(chunks)
     chunk_ids = [chunk.get("chunk_index") for chunk in chunks]
@@ -135,6 +141,7 @@ async def chat(payload: schemas.ChatRequest, db: Session = Depends(get_db)) -> s
                 llm_model=runtime_model,
                 workflow_context=workflow_context,
                 customer_name=customer.name,
+                tenant_id=principal.tenant_id,
             )
             flowise_used = True
         else:

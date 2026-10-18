@@ -68,7 +68,8 @@ def retrieve_relevant_chunks(db: Session, customer_id: int, question: str, top_k
     return _filter_synthetic_customer_docs([dict(row) for row in rows], customer_id)
 
 
-def retrieve_relevant_chunks_all_customers(db: Session, question: str, top_k: int = 12) -> list[dict[str, Any]]:
+def retrieve_relevant_chunks_all_customers(db: Session, question: str, top_k: int = 12, *, tenant_id: str) -> list[dict[str, Any]]:
+    """Portfolio-wide search, limited to the caller's tenant."""
     embedding = create_embedding(question)
     vector = _vector_literal(embedding)
     query = text(
@@ -84,12 +85,14 @@ def retrieve_relevant_chunks_all_customers(db: Session, question: str, top_k: in
           1 - (c.embedding <=> CAST(:embedding AS vector)) AS score
         FROM document_chunks c
         JOIN documents d ON d.id = c.document_id
+        JOIN customers cu ON cu.id = c.customer_id
         WHERE c.embedding IS NOT NULL
+          AND cu.tenant_id = :tenant_id
         ORDER BY c.embedding <=> CAST(:embedding AS vector)
         LIMIT :top_k
         """
     )
-    rows = db.execute(query, {"embedding": vector, "top_k": top_k}).mappings().all()
+    rows = db.execute(query, {"embedding": vector, "top_k": top_k, "tenant_id": tenant_id}).mappings().all()
     return [dict(row) for row in rows]
 
 

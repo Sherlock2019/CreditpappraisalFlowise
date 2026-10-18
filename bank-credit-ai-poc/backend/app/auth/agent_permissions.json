@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "description": "Single source of truth for agent runtime identities and tool scopes. Read by the FastAPI tool gateway (app/auth/policy.py), the Agentflow generator and the Agentflow validator. No agent can hold a human permission such as approval:decide.",
+  "token_issuer": "credit-ai-agent-gateway",
+  "token_audience": "credit-ai-tools",
+  "agents": {
+    "main_credit_appraisal": {
+      "label": "Main Credit Appraisal Agent",
+      "scopes": ["tool:policy.score", "tool:approval.request", "tool:approval.read", "tool:email.draft", "tool:audit.write"]
+    },
+    "credit_scoring": {
+      "label": "Credit Scoring Agent",
+      "scopes": ["tool:evidence.search:credit"]
+    },
+    "asset_appraisal": {
+      "label": "Asset Appraisal Agent",
+      "scopes": ["tool:evidence.search:asset"]
+    },
+    "legal_policy": {
+      "label": "Legal / Policy Agent",
+      "scopes": ["tool:evidence.search:legal"]
+    },
+    "fraud_aml": {
+      "label": "Fraud / AML Agent",
+      "scopes": ["tool:evidence.search:fraud"]
+    },
+    "loan_officer_qa": {
+      "label": "Loan Officer Q&A Agent",
+      "scopes": ["tool:evidence.search:qa", "tool:audit.write"]
+    },
+    "evaluation_judge": {
+      "label": "Evaluation Judge (staging)",
+      "scopes": ["tool:audit.write"]
+    }
+  },
+  "tools": {
+    "evidence.search": { "method": "POST", "path": "/api/v1/tools/evidence.search", "scope": "tool:evidence.search:{domain}" },
+    "policy.score": { "method": "POST", "path": "/api/v1/tools/policy.score", "scope": "tool:policy.score" },
+    "approval.request": { "method": "POST", "path": "/api/v1/tools/approval.request", "scope": "tool:approval.request" },
+    "approval.read": { "method": "GET", "path": "/api/v1/tools/approvals/{approval_id}", "scope": "tool:approval.read" },
+    "email.draft": { "method": "POST", "path": "/api/v1/tools/email.draft", "scope": "tool:email.draft" },
+    "audit.write": { "method": "POST", "path": "/api/v1/tools/audit.event", "scope": "tool:audit.write" }
+  }
+}

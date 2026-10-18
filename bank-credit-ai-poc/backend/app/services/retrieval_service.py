@@ -18,6 +18,19 @@ def _plain_json(value):
     return value
 
 
+REQUIRED_DOCUMENT_MARKERS = {
+    "financial statements": ["financial", "statement"],
+    "tax returns": ["tax"],
+    "bank statements": ["bank"],
+    "collateral valuation": ["collateral", "valuation"],
+}
+
+
+def missing_documents_from_context(context: dict) -> list[str]:
+    text = f"{context.get('context', '')} {context.get('question', '')}".lower()
+    return [label for label, markers in REQUIRED_DOCUMENT_MARKERS.items() if not any(marker in text for marker in markers)]
+
+
 def retrieve_customer_context(db: Session, customer_id: int, question: str, top_k: int = 8) -> dict:
     chunks = retrieve_relevant_chunks(db, customer_id, question, top_k=top_k)
     return {
