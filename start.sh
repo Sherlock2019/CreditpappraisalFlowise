@@ -376,7 +376,13 @@ if [[ "$START_LOCAL_FLOWISE" == "1" ]]; then
 fi
 
 # Flow that FastAPI calls through /api/v1/prediction/<id>; seeded by scripts/ensure-flowise-flows.js.
-DEFAULT_FLOWISE_CHATFLOW_ID="6f946e8b-2d35-4fd4-9ff9-158db1f0b820"
+# FLOWISE_FLOW=agentflow switches to the credit appraisal Agentflow (scripts/seed-flowise-agentflow.js).
+FLOWISE_FLOW="${FLOWISE_FLOW:-chatflow}"
+if [[ "$FLOWISE_FLOW" == "agentflow" ]]; then
+  DEFAULT_FLOWISE_CHATFLOW_ID="b3c1d7e2-4a5f-4e8b-9c6d-2f1a0e9d8c7b"
+else
+  DEFAULT_FLOWISE_CHATFLOW_ID="6f946e8b-2d35-4fd4-9ff9-158db1f0b820"
+fi
 
 # Once Flowise answers, add the credit appraisal flows if its database does not have them yet.
 if [[ "$START_LOCAL_FLOWISE" == "1" ]] && command -v node >/dev/null 2>&1; then

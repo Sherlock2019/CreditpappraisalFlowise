@@ -79,6 +79,14 @@ fi
 # PostgreSQL login used by the Postgres (pgvector) vector store node of the RAG flow.
 export POSTGRES_VECTORSTORE_USER="${POSTGRES_VECTORSTORE_USER:-${DB_USER:-credit_ai_user}}"
 export POSTGRES_VECTORSTORE_PASSWORD="${POSTGRES_VECTORSTORE_PASSWORD:-${DB_PASSWORD:-credit_ai_password}}"
+# Same login for the Postgres Record Manager node, which tracks what was loaded.
+export POSTGRES_RECORDMANAGER_USER="${POSTGRES_RECORDMANAGER_USER:-$POSTGRES_VECTORSTORE_USER}"
+export POSTGRES_RECORDMANAGER_PASSWORD="${POSTGRES_RECORDMANAGER_PASSWORD:-$POSTGRES_VECTORSTORE_PASSWORD}"
+
+# The credit appraisal Agentflow calls FastAPI on 127.0.0.1, which Flowise's default HTTP deny
+# list blocks. Replace the default list with one that still blocks cloud metadata endpoints.
+export HTTP_SECURITY_CHECK="${HTTP_SECURITY_CHECK:-false}"
+export HTTP_DENY_LIST="${HTTP_DENY_LIST:-0.0.0.0,169.254.0.0/16,fd00:ec2::254}"
 
 echo "Starting flowise@${FLOWISE_VERSION} on http://127.0.0.1:${FLOWISE_PORT}"
 echo "Log: ${POC_DIR}/logs/flowise.log"

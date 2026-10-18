@@ -18,8 +18,8 @@ const sqlite3 = require("../.tools/flowise-3.1.2/node_modules/sqlite3");
 
 // Runnable flow called by FastAPI through /api/v1/prediction/<id>.
 const BACKEND_FLOW_ID = "6f946e8b-2d35-4fd4-9ff9-158db1f0b820";
-// Placeholder canvas imported by an earlier version of this script.
-const MOCKUP_FLOW_ID = "7a1d2c3e-5b4f-4c6d-8e9f-0a1b2c3d4e5f";
+// "Docfactor Full Banking Workflow": the 16-stage canvas plus the RAG backend nodes.
+const WORKFLOW_FLOW_ID = "7a1d2c3e-5b4f-4c6d-8e9f-0a1b2c3d4e5f";
 
 const root = path.join(__dirname, "..");
 const dbPath = path.join(root, "bank-credit-ai-poc", "flowise", ".flowise", "database.sqlite");
@@ -164,7 +164,7 @@ async function main() {
 
   const db = new sqlite3.Database(dbPath);
   const workspaces = await query(db, "select id from workspace limit 1");
-  const flows = await query(db, "select id from chat_flow where id in (?, ?)", [BACKEND_FLOW_ID, MOCKUP_FLOW_ID]);
+  const flows = await query(db, "select id from chat_flow where id in (?, ?)", [BACKEND_FLOW_ID, WORKFLOW_FLOW_ID]);
   await new Promise((resolve) => db.close(resolve));
 
   if (!workspaces.length) {
@@ -174,8 +174,8 @@ async function main() {
 
   const existing = new Set(flows.map((flow) => flow.id));
 
-  if (existing.has(BACKEND_FLOW_ID) && process.env.FLOWISE_RESEED !== "1") {
-    console.log(`Backend flow already present: ${BACKEND_FLOW_ID}`);
+  if (existing.has(BACKEND_FLOW_ID) && existing.has(WORKFLOW_FLOW_ID) && process.env.FLOWISE_RESEED !== "1") {
+    console.log(`Flows already present: ${BACKEND_FLOW_ID}, ${WORKFLOW_FLOW_ID}`);
   } else {
     const models = await installedOllamaModels();
     run("seed-flowise-credit-app.js", [], {
@@ -190,12 +190,12 @@ async function main() {
     await tagChunksWithCustomer();
   }
 
-  // The 16-box placeholder canvas an earlier version imported is not a working flow; remove it.
-  if (existing.has(MOCKUP_FLOW_ID)) {
-    const cleanup = new sqlite3.Database(dbPath);
-    await query(cleanup, "delete from chat_flow where id = ?", [MOCKUP_FLOW_ID]);
-    await new Promise((resolve) => cleanup.close(resolve));
-    console.log(`Removed placeholder canvas: ${MOCKUP_FLOW_ID}`);
+  // The credit appraisal Agentflow (used with FLOWISE_FLOW=agentflow) does not depend on the
+  // chatflow above, so a failure here should not hide the chatflow result.
+  try {
+    run("seed-flowise-agentflow.js", [], {});
+  } catch (error) {
+    console.log(`Agentflow was not seeded: ${error.message}`);
   }
 }
 
