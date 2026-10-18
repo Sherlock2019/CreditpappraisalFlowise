@@ -70,6 +70,9 @@ print_urls() {
   echo "FastAPI Health:       http://${PUBLIC_HOST}:${BACKEND_PORT}/health"
   echo "FastAPI Swagger:      http://${PUBLIC_HOST}:${BACKEND_PORT}/docs"
   echo "Flowise UI:           http://${PUBLIC_HOST}:${FLOWISE_PORT}"
+  if [[ -f "${APP_DIR}/bank-credit-ai-poc/flowise/.flowise/launcher-login" ]]; then
+    echo "Flowise login:        see ${APP_DIR}/bank-credit-ai-poc/flowise/.flowise/launcher-login"
+  fi
   echo "======================================================"
 }
 
@@ -392,6 +395,8 @@ if [[ "$START_LOCAL_FLOWISE" == "1" ]] && command -v node >/dev/null 2>&1; then
       sleep 3
     done
     if is_flowise "$FLOWISE_PORT"; then
+      # Fresh Flowise database: create the admin account so seeding needs no manual sign-up.
+      FLOWISE_PORT="$FLOWISE_PORT" node "${APP_DIR}/scripts/bootstrap-flowise-account.js"
       node "${APP_DIR}/scripts/ensure-flowise-flows.js"
     else
       echo "Flowise did not answer on port ${FLOWISE_PORT}; flows were not checked."
