@@ -8,6 +8,21 @@ The default app is the single credit appraisal page:
 
 It is designed for a loan officer workflow: create/select customers, upload credit documents, ingest evidence, ask LISA questions, score policy risk, prepare committee review, record final decision, draft customer email, and retain audit evidence.
 
+## Project Status
+
+This is a local proof of concept. It is not production-ready.
+
+- **No authentication.** Every API endpoint is anonymous, CORS accepts any origin, and `/final-decision` trusts the `decided_by` value in the request body. Run it only on a trusted local machine.
+- **No tenant isolation.** Customer scoping is a query filter, not an access control.
+- **Temenos, Keycloak, Temporal, Kubernetes, CI/CD and SageMaker** appear in the target architecture but are not implemented.
+
+An incremental upgrade toward an enterprise platform is planned on branch `feature/enterprise-platform-upgrade`:
+
+| Document | Contents |
+| --- | --- |
+| [`docs/IMPLEMENTATION_GAP_ANALYSIS.md`](docs/IMPLEMENTATION_GAP_ANALYSIS.md) | What exists, what is tested, what is missing, and the critical security findings |
+| [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | Prioritized milestones (M0–M11), acceptance tests, and open decisions |
+
 ## What This Runs
 
 | Layer | Purpose | Default URL |
@@ -24,7 +39,7 @@ It is designed for a loan officer workflow: create/select customers, upload cred
 Run everything from WSL/Ubuntu:
 
 ```bash
-cd /home/dzoan/docfactorFlowise
+cd CreditpappraisalFlowise
 ./start.sh
 ```
 
@@ -257,6 +272,13 @@ Important local defaults:
 | `PYTHON_VENV_DIR` | `.venv` |
 
 ## Development Checks
+
+Automated tests:
+
+```bash
+# Backend unit tests (loan policy, retrieval service, Flowise client)
+.venv/bin/python -m pytest tests -q
+```
 
 Useful smoke checks:
 
