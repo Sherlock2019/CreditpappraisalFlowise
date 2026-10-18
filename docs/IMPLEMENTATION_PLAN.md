@@ -135,7 +135,7 @@ Prioritized, incremental upgrade of the credit appraisal POC. Based on `docs/IMP
 1. **Agentflow V2 work:** commit it to `main` first, or bring it onto this branch?
 2. **Async migration scope:** new `/api/v1` routes async with legacy routes left sync (recommended), or convert everything at once?
 3. **Embedding model of record:** Ollama `embeddinggemma` (768-d, private, recommended) or another model? This sets the pgvector column dimension.
-4. **CI target:** GitLab CI (per the brief) — confirm there is a GitLab remote, since `origin` is the only remote today.
+4. **CI target:** the only remote is GitHub (`origin` → github.com). The brief asks for GitLab CI. Choose one: GitHub Actions (runs on today's remote), GitLab CI (needs a GitLab mirror), or both from shared scripts.
 5. **Legacy auth cut-over:** when should unversioned routes start requiring tokens — after the React console ships, or only after LISA is updated to log in?
 
 ## Immediate next step
