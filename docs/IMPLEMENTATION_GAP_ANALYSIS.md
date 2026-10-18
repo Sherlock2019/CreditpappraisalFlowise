@@ -5,6 +5,22 @@ Audit of the credit appraisal POC against the enterprise upgrade target. Every s
 - **Audited commit:** `ead27c3` (branch `main`), audited 2026-10-18 on branch `feature/enterprise-platform-upgrade`.
 - **Working tree at audit time:** uncommitted edits to `scripts/ensure-flowise-flows.js`, `scripts/seed-flowise-credit-app.js`, `start-flowise.sh`, `start.sh`; untracked `flowise_project/agentflows/` and `scripts/seed-flowise-agentflow.js`. The Agentflow V2 work exists only in the working tree and is not committed yet.
 
+## Status update (2026-10-18, governed agent path)
+
+The tables below record the audit baseline. Since then, these findings have been addressed for the `/api/v1` and Agentflow path (evidence: `docs/FLOWISE_INTEGRATION.md`, `tests/test_agent_gateway.py`, validator):
+
+| Finding | Now |
+| --- | --- |
+| 1. No authentication | `/api/v1` requires OIDC (JWKS) or run-bound agent tokens. Legacy routes are still anonymous in dev mode |
+| 2. Human approval asserted, not authenticated | Decisions only via `POST /api/v1/approvals/{id}/decision` by an authenticated human with `approval:decide`, four-eyes enforced. `/final-decision` rejects agent tokens and, with a token, takes the decider from it |
+| 3. CORS any origin | Configured allow-list (`CORS_ALLOW_ORIGINS`) |
+| 4. No tenant model | `customers.tenant_id`; runs, approvals and audit are tenant-scoped; `/chat` portfolio search is limited to the caller's tenant |
+| 5. Flowise RAG bypasses FastAPI | The Agentflow retrieves only through the tool gateway. The legacy Chatflow is still direct, now filtered by `{customer, tenant_id}` |
+| 7. Mutable, non-atomic audit | New hash-chained `audit_events`, written in the business transaction, with `GET /api/v1/audit/verify` |
+| Per-agent identity / MCP-style tools | Shown, without an MCP transport |
+
+Still open: finding 6 (read endpoints create customers), Alembic, the React console, Keycloak realm/PKCE, SCIM, durable workflows, observability, CI/CD, connectors and evaluation.
+
 ## Status legend
 
 | Status | Meaning |

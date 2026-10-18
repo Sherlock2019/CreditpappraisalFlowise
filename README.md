@@ -12,16 +12,88 @@ It is designed for a loan officer workflow: create/select customers, upload cred
 
 This is a local proof of concept. It is not production-ready.
 
-- **No authentication.** Every API endpoint is anonymous, CORS accepts any origin, and `/final-decision` trusts the `decided_by` value in the request body. Run it only on a trusted local machine.
-- **No tenant isolation.** Customer scoping is a query filter, not an access control.
-- **Temenos, Keycloak, Temporal, Kubernetes, CI/CD and SageMaker** appear in the target architecture but are not implemented.
-
-An incremental upgrade toward an enterprise platform is planned on branch `feature/enterprise-platform-upgrade`:
+- **Governed agent path (new, `/api/v1`).** Requires a bearer token. People use OIDC tokens; each Flowise agent gets its own short-lived token for one run. Access is checked per tenant and per role, and every tool call is audited. Credit decisions can only be recorded by a second, authenticated officer. See [`docs/FLOWISE_INTEGRATION.md`](docs/FLOWISE_INTEGRATION.md).
+- **Legacy LISA/Streamlit routes stay anonymous** in local dev (`LEGACY_AUTH_MODE=dev-anonymous`). `/chat` and `/final-decision` already respect tenants and reject agent tokens. Run the app only on a trusted machine.
+- **Not implemented yet:** Temenos, a Keycloak realm, the React console, Temporal, Alembic migrations, OpenTelemetry/Prometheus, Kubernetes, CI/CD and SageMaker.
 
 | Document | Contents |
 | --- | --- |
 | [`docs/IMPLEMENTATION_GAP_ANALYSIS.md`](docs/IMPLEMENTATION_GAP_ANALYSIS.md) | What exists, what is tested, what is missing, and the critical security findings |
 | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | Prioritized milestones (M0–M11), acceptance tests, and open decisions |
+| [`docs/FLOWISE_INTEGRATION.md`](docs/FLOWISE_INTEGRATION.md) | How the Agentflow and Chatflow use identities, approval, tenants and audit |
+| [`docs/AGENT_PERMISSIONS.md`](docs/AGENT_PERMISSIONS.md) | Agent tool scopes and human role permissions |
+
+## Skills Evidence Map
+
+Where each skill shows up in this repository, and how it is verified.
+
+**Status:** **Shown** means code plus passing automated tests. **Partial** means code exists but is incomplete or untested. **Not shown** means there is no code for it yet (see the plan). **Not provable from code** covers skills a repository cannot evidence.
+
+Verification commands: `.venv/bin/python -m pytest tests -q` (35 tests) and `node flowise_project/agentflows/validate-agentflows.js` (9 scenarios × 3 environments).
+
+### Primary skills: full-stack engineering
+
+| Skill | Status | Where to look | Verified by |
+| --- | --- | --- | --- |
+| Python, FastAPI, Pydantic | Shown | [`routers/v1/`](bank-credit-ai-poc/backend/app/routers/v1/), [`schemas_v1.py`](bank-credit-ai-poc/backend/app/schemas_v1.py), [`auth/dependencies.py`](bank-credit-ai-poc/backend/app/auth/dependencies.py) | [`tests/test_agent_gateway.py`](tests/test_agent_gateway.py) |
+| Typed API design | Shown | Strict Pydantic models (`extra="forbid"`, `Literal` enums, bounds); one error envelope with correlation id ([`errors.py`](bank-credit-ai-poc/backend/app/errors.py)); OpenAPI at `/docs`; tool contracts exported to [`tool-schemas.json`](flowise_project/agentflows/tool-schemas.json) | [`tests/test_tool_schemas.py`](tests/test_tool_schemas.py) (fails on schema drift) |
+| PostgreSQL and data modeling | Partial | [`models.py`](bank-credit-ai-poc/backend/app/models.py) (runs, approvals, hash-chained audit, pgvector chunks, JSONB); tenant-scoped pgvector SQL in [`rag.py`](bank-credit-ai-poc/backend/app/rag.py); per-tenant advisory lock in [`audit_chain.py`](bank-credit-ai-poc/backend/app/services/audit_chain.py) | API tests run on SQLite; no Alembic migrations yet |
+| Distributed and asynchronous systems | Partial | FastAPI ↔ Flowise callback protocol with pause/resume ([`agent_runtime.py`](bank-credit-ai-poc/backend/app/services/agent_runtime.py)), idempotency keys, retries with exponential backoff, correlation ids across services | Gateway tests; no durable workflow engine or queue yet |
+| TypeScript, React | Not shown | The LISA UI is vanilla JS ([`creditappflowise/`](creditappflowise/)); React console is milestone M2 | none |
+| End-to-end feature delivery | Shown (backend + AI flow) | Governed agent runs: gap analysis → design → API → Flowise flows → tests → docs, in branch history | Tests, validator, live run notes in [`docs/FLOWISE_INTEGRATION.md`](docs/FLOWISE_INTEGRATION.md) |
+
+### Primary skills: AI and data
+
+| Skill | Status | Where to look | Verified by |
+| --- | --- | --- | --- |
+| LLM agents and tool calling | Shown | Agentflow V2 generator with router, 4 specialists, memo agent and structured outputs ([`build-agentflows.js`](flowise_project/agentflows/build-agentflows.js)); typed tool gateway ([`routers/v1/tools.py`](bank-credit-ai-poc/backend/app/routers/v1/tools.py)) | Validator dry runs; gateway tests with a simulated flow; live run (see the limitations in FLOWISE_INTEGRATION) |
+| MCP | Partial | MCP-style typed tool schemas and scope-filtered manifest (`GET /api/v1/tools/manifest`); no MCP transport server | `test_human_token_cannot_call_tools_and_manifest_is_scope_filtered` |
+| AI evaluation | Partial | Staging Evaluation Judge node (groundedness, citation coverage, policy consistency) in the AWS staging flow; adversarial validator scenarios (hallucinated recommendation, Proceed without a decision) | Validator; no versioned eval dataset or metrics pipeline yet |
+| Data pipelines | Partial | Upload → parse → chunk → embed → pgvector ([`routers/documents.py`](bank-credit-ai-poc/backend/app/routers/documents.py), [`document_parser.py`](bank-credit-ai-poc/backend/app/document_parser.py)); Flowise vector upsert ([`ensure-flowise-flows.js`](scripts/ensure-flowise-flows.js)) | Runs inline, not durable; parsers untested |
+| Knowledge graphs and ontology | Not shown | none | none |
+| Spreadsheet and document processing | Partial | PDF, DOCX, XLSX, CSV and image parsing in [`document_parser.py`](bank-credit-ai-poc/backend/app/document_parser.py); synthetic dataset in [`docfactor_banking_demo_dataset/`](docfactor_banking_demo_dataset/) | No parser tests yet |
+
+### Primary skills: integrations and security
+
+| Skill | Status | Where to look | Verified by |
+| --- | --- | --- | --- |
+| Enterprise APIs and SaaS integrations | Partial | Connector interface; S3 is a real connector; SharePoint, Salesforce, ServiceNow, OpenText, Hyland and FileNet are placeholders ([`connectors/`](bank-credit-ai-poc/backend/app/connectors/)); Flowise prediction and resume API client | No connector tests; Temenos is not implemented |
+| OAuth 2.0 / SSO | Partial | OIDC token validation: JWKS (RS256/ES256), issuer, audience, expiry, tenant claim, Keycloak roles ([`auth/tokens.py`](bank-credit-ai-poc/backend/app/auth/tokens.py)) | Forged, expired and wrong-audience tokens rejected in `test_v1_requires_a_valid_token`; no Keycloak realm or PKCE browser flow yet |
+| SCIM | Not shown | none | none |
+| Secure credential handling | Shown | Short-lived agent tokens bound to one run, never in prompts; secrets only from env; redaction in audit; `.env` git-ignored | Validator rule "token outside Authorization header"; `test_tools_are_disabled_while_the_run_waits_for_a_human` |
+| Multi-tenant authorization, RBAC, audit | Shown | Default-deny role map ([`auth/policy.py`](bank-credit-ai-poc/backend/app/auth/policy.py)); per-agent scopes ([`agent_permissions.json`](bank-credit-ai-poc/backend/app/auth/agent_permissions.json)); tenant filtering; four-eyes approval; hash-chained audit with verification | `test_other_tenant_cannot_see_or_act_on_demo_data`, `test_agent_cannot_use_another_agents_evidence_domain`, `test_editing_an_audit_row_breaks_the_chain` |
+
+### Primary skills: cloud and reliability
+
+| Skill | Status | Where to look | Verified by |
+| --- | --- | --- | --- |
+| Docker | Partial | Backend and Streamlit Dockerfiles; [`docker-compose.yml`](bank-credit-ai-poc/docker-compose.yml) with pgvector and Flowise | Not built in CI |
+| GCP | Not shown | none (an AWS staging profile exists only as configuration) | none |
+| CI/CD | Not shown | The suites above are CI-ready; no pipeline file yet | none |
+| Temporal or similar | Not shown | The Flowise pause/resume is coordinated by FastAPI, which is not a durable engine (milestone M6) | none |
+| Automated testing | Shown | 35 pytest tests; Agentflow validator with schema checks and security rules | The validator rejects deliberately broken flows (wrong agent token, legacy decision call, token in a prompt) |
+| Observability and troubleshooting | Partial | Correlation ids on every request, Flowise call and audit event; structured error envelope; queryable audit API | No OpenTelemetry, Prometheus or Grafana yet |
+
+### Secondary skills
+
+| Skill | Status | Where to look |
+| --- | --- | --- |
+| Hands-on cloud (GCP/AWS/Azure) | Not shown | Configuration targets only (AWS staging and OpenStack production Agentflow profiles, S3 connector) |
+| MLOps: Docker, Kubernetes, MLflow | Partial (Docker only) | No Kubernetes or MLflow |
+| Running self-hosted LLMs | Shown locally | Ollama (gemma4, mistral, embeddinggemma) behind Flowise and FastAPI; vLLM endpoints configured for production and staging but not deployed |
+| Fine-tuning LLMs on cloud GPUs | Not shown | none |
+| Automated evaluation: grounding, hallucination, drift | Partial | Evaluation Judge node; no drift analysis |
+| Deploying AI with monitoring and guardrails | Partial | Guardrails: prompt rules, moderation deny-list, tool-boundary authorization, human approval gate. No deployment or monitoring stack |
+
+### Professional skills
+
+| Skill | Status | Evidence |
+| --- | --- | --- |
+| System design and problem-solving | Partial | [`docs/IMPLEMENTATION_GAP_ANALYSIS.md`](docs/IMPLEMENTATION_GAP_ANALYSIS.md), [`docs/FLOWISE_INTEGRATION.md`](docs/FLOWISE_INTEGRATION.md) (ownership split, threat-driven controls) |
+| Clear technical communication | Partial | The docs above, commit history, and this map |
+| End-to-end ownership | Partial | The branch history shows a feature taken from audit to tested delivery. Production ownership cannot be shown by a repository |
+| Cross-functional collaboration | Not provable from code | none |
+| Mentoring and technical leadership | Not provable from code | none |
 
 ## What This Runs
 
