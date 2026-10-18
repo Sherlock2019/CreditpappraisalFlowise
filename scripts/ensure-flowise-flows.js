@@ -174,7 +174,7 @@ async function main() {
   await new Promise((resolve) => db.close(resolve));
 
   if (!workspaces.length) {
-    console.log("Flowise has no workspace yet. Open the Flowise UI, create the account, then run this again.");
+    console.log("Flowise has no workspace yet. Run node scripts/bootstrap-flowise-account.js (start.sh does this), then run this again.");
     process.exit(2);
   }
 
@@ -194,6 +194,13 @@ async function main() {
     });
     if (process.env.FLOWISE_SKIP_UPSERT !== "1") await upsertDocuments();
     await tagChunksWithCustomer();
+  }
+
+  // Keep the canvas' Enterprise Platform lane in step with the code on every launch.
+  try {
+    run("seed-flowise-platform-canvas.js", [], {});
+  } catch (error) {
+    console.log(`Platform canvas lane was not refreshed: ${error.message}`);
   }
 
   // The credit appraisal Agentflow (used with FLOWISE_FLOW=agentflow) does not depend on the

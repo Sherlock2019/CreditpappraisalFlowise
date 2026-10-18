@@ -271,6 +271,60 @@
       "dragging": false
     },
     {
+      "id": "stickyNoteAgentflow_5",
+      "type": "stickyNote",
+      "position": {
+        "x": 7040,
+        "y": -660
+      },
+      "data": {
+        "id": "stickyNoteAgentflow_5",
+        "label": "Sticky Note",
+        "version": 1,
+        "name": "stickyNoteAgentflow",
+        "type": "StickyNote",
+        "color": "#fee440",
+        "baseClasses": [
+          "StickyNote"
+        ],
+        "category": "Agent Flows",
+        "description": "Add notes to the agent flow",
+        "inputParams": [
+          {
+            "label": "",
+            "name": "note",
+            "type": "string",
+            "rows": 1,
+            "placeholder": "Type something here",
+            "optional": true,
+            "id": "stickyNoteAgentflow_5-input-note-string",
+            "display": true
+          }
+        ],
+        "inputAnchors": [],
+        "inputs": {
+          "note": "PLATFORM FEATURES IN THIS FLOW\n\n[Partial] OAuth 2.0 / OIDC SSO Login\n[Implemented] Multi-tenant RBAC (default deny)\n[Implemented] Secure Credential Handling\n[Implemented] Typed API v1 (Python · FastAPI · Pydantic)\n[Partial] Distributed & Async Execution\n[Implemented] LLM Agents & Tool Calling (Agentflow V2)\n[Partial] MCP-style Tool Gateway\n[Partial] AI Evaluation & Safety\n[Partial] Data Pipeline: Parse → Chunk → Embed → pgvector\n[Implemented] Human Approval Gate (four-eyes)\n[Implemented] Tamper-evident Audit\n[Partial] Observability & Troubleshooting\n\nNot in this flow yet (see the Full Banking Workflow canvas and docs/IMPLEMENTATION_PLAN.md): SCIM 2.0 User & Group Provisioning (Planned), PostgreSQL + pgvector Data Model (Partial), React / TypeScript Console (Planned), Enterprise APIs & SaaS Connectors (Partial), Document & Spreadsheet Processing (Partial), Knowledge Graph & Ontology (Planned), Durable Workflows (Temporal) (Planned), Automated Testing (Implemented), CI/CD Pipeline (Planned), Docker · GCP-compatible Deployment (Partial)."
+        },
+        "outputAnchors": [
+          {
+            "id": "stickyNoteAgentflow_5-output-stickyNoteAgentflow",
+            "label": "Sticky Note",
+            "name": "stickyNoteAgentflow"
+          }
+        ],
+        "outputs": {},
+        "selected": false
+      },
+      "width": 260,
+      "height": 180,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 7040,
+        "y": -660
+      },
+      "dragging": false
+    },
+    {
       "id": "startAgentflow_0",
       "type": "agentFlow",
       "position": {

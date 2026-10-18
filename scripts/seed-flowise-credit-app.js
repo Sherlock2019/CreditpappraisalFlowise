@@ -23,6 +23,7 @@
 const fs = require("fs");
 const path = require("path");
 const sqlite3 = require("../.tools/flowise-3.1.2/node_modules/sqlite3");
+const { withPlatformLane } = require("./lib/platform-canvas");
 
 const root = path.join(__dirname, "..");
 const dbPath = path.join(root, "bank-credit-ai-poc", "flowise", ".flowise", "database.sqlite");
@@ -462,11 +463,11 @@ function buildFullWorkflow() {
     const position = { x: node.position.x - ragLeft + left, y: node.position.y - ragTop + bottom + 240 };
     return { ...node, position, positionAbsolute: position };
   });
-  return {
+  return withPlatformLane({
     nodes: [...stages.nodes, ...ragNodes],
     edges: [...stages.edges, ...flowData.edges],
     viewport: stages.viewport || { x: 0, y: 0, zoom: 0.4 },
-  };
+  });
 }
 
 function updateEnv(content, key, value) {

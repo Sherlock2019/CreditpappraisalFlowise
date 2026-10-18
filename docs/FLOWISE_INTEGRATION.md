@@ -74,6 +74,18 @@ sequenceDiagram
 | Audit of every tool call and denial | Hash-chained `audit_events`, written in the same transaction | `test_editing_an_audit_row_breaks_the_chain` |
 | Correlation | `X-Correlation-ID` from the original request is passed to Flowise, sent by every HTTP node, and stored on audit events | gateway tests |
 
+## Full Banking Workflow canvas: Enterprise Platform lane
+
+The design canvas "Docfactor Full Banking Workflow" (`7a1d2c3e-…`) has an **Enterprise Platform** lane under the original 16 stages. It holds one Custom Function stage per platform capability, in the order a governed request meets them:
+
+- **Label:** each stage is labelled with its real status: `[Implemented]` (code plus passing tests), `[Partial]` or `[Planned]`.
+- **Content:** running a stage returns where the capability is implemented, which tests verify it, and what comes next.
+- **Source:** `scripts/lib/platform-canvas.js` is the single list. The Agentflow's "Platform features in this flow" sticky note is built from the same list.
+- **Refresh:** `scripts/seed-flowise-platform-canvas.js` refreshes the lane on every `./start.sh`. It replaces only `platform_*` nodes, so your other canvas edits are kept.
+- **Honesty check:** `tests/test_platform_canvas.py` fails if an Implemented or Partial stage points at a file or test that doesn't exist, if a Planned stage claims an implementation, or if an Implemented stage has no test.
+
+The canvas documents the platform. The runnable governed path is the Agentflow below.
+
 ## Legacy RAG Chatflow
 
 The Chatflow reads its own pgvector table (`flowise_rag_chunks`) directly, so FastAPI cannot authorize each retrieval. Its controls are weaker:

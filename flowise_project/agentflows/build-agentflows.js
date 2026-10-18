@@ -28,6 +28,20 @@ const AGENTFLOW_DIR = path.join(COMPONENTS_DIR, 'dist', 'nodes', 'agentflow')
 const OUT_DIR = path.join(__dirname, 'generated')
 // Agent identities and tool scopes, shared with the FastAPI tool gateway and the validator.
 const PERMISSIONS = require(path.join(REPO_ROOT, 'bank-credit-ai-poc', 'backend', 'app', 'auth', 'agent_permissions.json'))
+// Platform capability list with real statuses, shared with the Full Banking Workflow canvas.
+const { STAGES, STATUS } = require(path.join(REPO_ROOT, 'scripts', 'lib', 'platform-canvas.js'))
+// Capabilities this Agentflow exercises when it runs as a governed run.
+const EXERCISED = ['oidc_sso', 'tenant_rbac', 'credentials', 'typed_api', 'async_distributed', 'agents_tools', 'mcp_gateway', 'ai_evaluation', 'data_pipeline', 'human_approval', 'audit_chain', 'observability']
+const FEATURE_NOTE =
+    'PLATFORM FEATURES IN THIS FLOW\n\n' +
+    STAGES.filter((s) => EXERCISED.includes(s.key))
+        .map((s) => `[${STATUS[s.status]}] ${s.label}`)
+        .join('\n') +
+    '\n\nNot in this flow yet (see the Full Banking Workflow canvas and docs/IMPLEMENTATION_PLAN.md): ' +
+    STAGES.filter((s) => !EXERCISED.includes(s.key))
+        .map((s) => `${s.label} (${STATUS[s.status]})`)
+        .join(', ') +
+    '.'
 
 const NODE_CLASS_DIRS = {
     startAgentflow: 'Start',
@@ -512,6 +526,7 @@ function buildFlow(env) {
     note(b, at(7, -3), env.notes.model)
     note(b, at(12, -3), env.notes.controls)
     note(b, at(17, -3), env.notes.integration)
+    note(b, at(22, -3), FEATURE_NOTE)
 
     const start = b.add(
         'startAgentflow',
