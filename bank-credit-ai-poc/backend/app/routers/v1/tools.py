@@ -13,6 +13,7 @@ from app import schemas
 from app.auth.dependencies import require_agent, require_scope
 from app.auth.principal import Principal
 from app.auth.tokens import agent_registry
+from app.correlation import correlation_id_var
 from app.database import get_db
 from app.flowise_compat import external_document_id
 from app.models import AgentRun, Approval
@@ -51,10 +52,15 @@ def _active_run(db: Session, principal: Principal, customer_id: int | None = Non
         raise HTTPException(status_code=403, detail=f"Run is {run.status}; tools are disabled")
     if customer_id is not None and customer_id != principal.customer_id:
         raise HTTPException(status_code=403, detail="customer_id does not match the customer bound to this run")
+    # Trace tool calls under the run's correlation id, whatever header the caller sent.
+    correlation_id_var.set(run.correlation_id)
     return run
 
 
 def _audit_denied(db: Session, principal: Principal, tool: str, reason: str) -> None:
+    run = db.get(AgentRun, principal.run_id)
+    if run is not None and run.tenant_id == principal.tenant_id:
+        correlation_id_var.set(run.correlation_id)
     append_audit_event(db, principal, "agent_tool_denied", customer_id=principal.customer_id, details={"tool": tool, "reason": reason})
     db.commit()
 

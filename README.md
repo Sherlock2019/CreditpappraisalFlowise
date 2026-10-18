@@ -23,6 +23,22 @@ This is a local proof of concept. It is not production-ready.
 | [`docs/FLOWISE_INTEGRATION.md`](docs/FLOWISE_INTEGRATION.md) | How the Agentflow and Chatflow use identities, approval, tenants and audit |
 | [`docs/AGENT_PERMISSIONS.md`](docs/AGENT_PERMISSIONS.md) | Agent tool scopes and human role permissions |
 
+## Platform Demo
+
+[`scripts/demo_platform.py`](scripts/demo_platform.py) runs every stage of the Flowise "Enterprise Platform" lane through FastAPI and prints PASS/FAIL per stage. Planned stages are listed, not faked.
+
+```bash
+# Offline: the real FastAPI app in-process on SQLite, a simulated Agentflow, evidence parsed from the
+# synthetic CUST-001 documents. Needs no Postgres, Flowise or LLM.
+.venv/bin/python scripts/demo_platform.py
+
+# Live: against a backend started with AUTH_DEV_MODE=true and the same AUTH_DEV_JWT_SECRET,
+# which calls the real Flowise Agentflow.
+AUTH_DEV_JWT_SECRET=... .venv/bin/python scripts/demo_platform.py --live --api http://127.0.0.1:8000 --customer 2
+```
+
+The demo checks: SSO token validation, tenant isolation and RBAC, per-agent credentials, typed API errors and idempotency, the agent run pausing at the approval gate, refusals of cross-agent and injected-customer calls, four-eyes approval and resume, correlation ids, the audit hash chain and its tamper detection, document and spreadsheet parsing, connectors, and the Agentflow validator.
+
 ## Skills Evidence Map
 
 Where each skill shows up in this repository, and how it is verified.

@@ -194,6 +194,8 @@ def test_full_run_pauses_for_human_and_records_decision_by_second_officer(env):
 
     events = client.get("/api/v1/audit/events", params={"run_id": run["id"], "limit": 200}, headers=human("carol", "compliance_officer")).json()["items"]
     actors = {(e["actor"], e["event_type"]) for e in events}
+    # Tool calls are traced under the run's correlation id even though the simulated flow sends none.
+    assert all(e["correlation_id"] == run["correlation_id"] for e in events if e["event_type"].startswith("agent_tool"))
     assert ("bob", "credit_decision_recorded") in actors
     assert ("agent:credit_scoring", "agent_tool_evidence_search") in actors
     assert ("agent:main_credit_appraisal", "flow_credit_decision_relayed") in actors
@@ -227,6 +229,7 @@ def test_agent_cannot_use_another_agents_evidence_domain(env):
     assert "tool:evidence.search:legal" in body["error"]["message"]
     denied = client.get("/api/v1/audit/events", params={"event_type": "agent_tool_denied"}, headers=human("carol", "compliance_officer")).json()
     assert denied["total"] == 1 and denied["items"][0]["actor"] == "agent:credit_scoring"
+    assert denied["items"][0]["correlation_id"] == run["correlation_id"]
 
 
 def test_injected_customer_id_cannot_redirect_tools(env):
