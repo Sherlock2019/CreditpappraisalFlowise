@@ -109,6 +109,8 @@ class DocumentMemoryCache:
         scored.sort(key=lambda item: item[0], reverse=True)
         return [
             {
+                # Needed for unique chunk_id citations (chunk_<document>_<index>), same as the pgvector path.
+                "document_id": chunk.document_id,
                 "chunk_text": chunk.chunk_text,
                 "filename": chunk.metadata.get("filename", "document"),
                 "document_type": chunk.metadata.get("document_type"),
